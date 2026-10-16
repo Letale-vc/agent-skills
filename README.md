@@ -66,25 +66,25 @@ agy plugin install https://github.com/Letale-vc/agent-skills.git
 
 ### Основний ланцюжок розробки (The 9-Stage Lifecycle Chain)
 
-| Етап | Команда | Режим доступу | Призначення |
-| :--- | :--- | :--- | :--- |
-| **0. Idea** | [`/idea`](skills/idea/SKILL.md) | **100% Read-Only** | Допомагає розвинути і сформулювати сиру/нечітку думку через генерацію напрямків, рекомендацій та навідних питань. Видає блок `Crystallized Idea`. |
-| **1. Interview** | [`/interview`](skills/interview/SKILL.md) | **100% Read-Only** | Виявляє приховані вимоги та межі (1 питання за раз із гіпотезою `GUESS` та оцінкою `CONFIDENCE` до ~95%). |
-| **2. Intent** | [`/intent`](skills/intent/SKILL.md) | **Writer** (`.temp/<topic>/intent.md`) | Фіксує лаконічний Statement of Intent у `.temp/<topic>/intent.md`. |
-| **3. Proposal** | [`/proposal`](skills/proposal/SKILL.md) | **Writer** (`.temp/<topic>/proposal.md`) | Створює технічний RFC, перевіряє версії залежностей і пропонує стратегію інтеграції: **Expand-Contract (паралельна реалізація з deprecation/видаленням)** або **In-Place**. |
-| **4. Decompose** | [`/decompose`](skills/decompose/SKILL.md) | **Append-Writer** (`.temp/<topic>/*tasks.md`) | Розбиває план, чат-дискусію або зауваження рев'ю на неруйнівні задачі з прикладами коду. **Ніколи не перезаписує старі файли задач** (`tasks.md`, `review-1-tasks.md`, `subtasks-1.md`). |
-| **5. Implement** | [`/implement`](skills/implement/SKILL.md) | **Writer** (`src/`, тести, `[x]`) | Виконує задачі за TDD (по одній або всі залпом), зберігаючи проєкт у 100% робочому стані, та відмічає прогрес `[ ]` → `[x]`. |
-| **6. Review** | [`/review`](skills/review/SKILL.md) | **100% Read-Only** | Чистий рецензент (код, задачі або пропоузал). Нічого не редагує і не запускає тести. При зауваженнях рекомендує `/decompose`, при успіху — `/spec` або `/cleanup`. |
-| **7. Spec** | [`/spec`](skills/spec/SKILL.md) | **Writer** (`docs/specifications/`) | Створює або оновлює декларативні нормативні специфікації системи у `docs/specifications/` (як система працює зараз, без історії міграцій). |
-| **8. Cleanup** | [`/cleanup`](skills/cleanup/SKILL.md) | **Cleaner** (`.temp/`) | Показує стан тем у `.temp/` і через інтерактивний `ask_question` запитує, які завершені папки видалити, а які залишити. |
+| # | Скіл | Режим&nbsp;доступу | Призначення |
+| :---: | :--- | :--- | :--- |
+| **0** | [`/idea`](skills/idea/SKILL.md) | `Read-Only` | Допомагає розвинути і сформулювати сиру/нечітку думку через генерацію напрямків, рекомендацій та навідних питань. Видає блок `Crystallized Idea`. |
+| **1** | [`/interview`](skills/interview/SKILL.md) | `Read-Only` | Виявляє приховані вимоги та межі (1 питання за раз із гіпотезою `GUESS` та оцінкою `CONFIDENCE` до ~95%). |
+| **2** | [`/intent`](skills/intent/SKILL.md) | `Writer` (`.temp/<topic>/intent.md`) | Фіксує лаконічний Statement of Intent у `.temp/<topic>/intent.md`. |
+| **3** | [`/proposal`](skills/proposal/SKILL.md) | `Writer` (`.temp/<topic>/proposal.md`) | Створює технічний RFC, перевіряє версії залежностей і пропонує стратегію інтеграції: **Expand-Contract** (паралельна реалізація з deprecation/видаленням) або **In-Place**. |
+| **4** | [`/decompose`](skills/decompose/SKILL.md) | `Append-Writer` (`.temp/<topic>/*tasks.md`) | Розбиває план, чат-дискусію або зауваження рев'ю на неруйнівні задачі з прикладами коду. **Ніколи не перезаписує старі файли задач** (`tasks.md`, `review-1-tasks.md`, `subtasks-1.md`). |
+| **5** | [`/implement`](skills/implement/SKILL.md) | `Writer` (`src/`, тести, `[x]`) | Виконує задачі за TDD (по одній або всі залпом), зберігаючи проєкт у 100% робочому стані, та відмічає прогрес `[ ]` → `[x]`. |
+| **6** | [`/review`](skills/review/SKILL.md) | `Read-Only` | Чистий рецензент (код, задачі або пропоузал). Нічого не редагує і не запускає тести. При зауваженнях рекомендує `/decompose`, при успіху — `/spec` або `/cleanup`. |
+| **7** | [`/spec`](skills/spec/SKILL.md) | `Writer` (`docs/specifications/`) | Створює або оновлює декларативні нормативні специфікації системи у `docs/specifications/` (як система працює зараз, без історії міграцій). |
+| **8** | [`/cleanup`](skills/cleanup/SKILL.md) | `Cleaner` (`.temp/`) | Показує стан тем у `.temp/` і через інтерактивний `ask_question` запитує, які завершені папки видалити, а які залишити. |
 
 ### Мета-роутер та утиліти (Meta & Utility Skills)
 
-| Команда | Режим доступу | Призначення |
+| Скіл | Режим&nbsp;доступу | Призначення |
 | :--- | :--- | :--- |
-| [`/using-agent-skills`](skills/using-agent-skills/SKILL.md) | **100% Read-Only** | Карта вибору скілів під задачу + 6 базових правил інженерної дисципліни агента. |
-| [`/debug`](skills/debug/SKILL.md) | **Diagnostic & Fix** | Пошук першопричини багів за правилом `Stop-the-Line`: `Reproduce` → `Localize` → `Root Cause Hypothesis` → інтерактивний вибір способу виправлення. |
-| [`/git`](skills/git/SKILL.md) | **Git Operator (Confirmed)** | Групування змін у чисті атомарні коміти з фокусом на *why*, захист від потрапляння `.temp/` у коміт та обов'язкове підтвердження перед `git commit`. |
+| [`/using-agent-skills`](skills/using-agent-skills/SKILL.md) | `Read-Only` | Карта вибору скілів під задачу + 6 базових правил інженерної дисципліни агента. |
+| [`/debug`](skills/debug/SKILL.md) | **Diagnostic&nbsp;&amp;&nbsp;Fix** | Пошук першопричини багів за правилом `Stop-the-Line`: `Reproduce` → `Localize` → `Root Cause Hypothesis` → інтерактивний вибір способу виправлення. |
+| [`/git`](skills/git/SKILL.md) | **Git&nbsp;Operator** | Групування змін у чисті атомарні коміти з фокусом на *why*, захист від потрапляння `.temp/` у коміт та обов'язкове підтвердження перед `git commit`. |
 
 ---
 
