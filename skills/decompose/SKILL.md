@@ -1,6 +1,6 @@
 ---
 name: decompose
-description: Breaks down a proposal, chat discussion, review findings, or a complex task into independent, non-breaking vertical slice tasks in .temp/<topic>/. Never overwrites existing task files. Use via /decompose.
+description: Breaks down a feature request, technical proposal (RFC), chat discussion, or code review findings into independent, non-breaking vertical slice tasks in .temp/<topic>/. Never overwrites existing task files. Use when planning implementation steps or via /decompose.
 ---
 
 # Decompose (`/decompose`)
@@ -12,7 +12,7 @@ description: Breaks down a proposal, chat discussion, review findings, or a comp
   - New task files inside `.temp/<topic>/`:
     - `.temp/<topic>/tasks.md` (initial task breakdown)
     - `.temp/<topic>/review-<N>-tasks.md` (tasks created from `/review` findings, e.g., `review-1-tasks.md`, `review-2-tasks.md`)
-    - `.temp/<topic>/subtasks-<id>.md` (when splitting a specific existing task into smaller subtasks)
+    - `.temp/<topic>/subtasks-<id>.md` or `.temp/<topic>/subtasks-r<M>-<id>.md` (when splitting a specific existing task into smaller subtasks)
   - `.gitignore` (only to ensure `.temp/` is ignored)
 - **FORBIDDEN ACTIONS**:
   - **NEVER overwrite or rewrite an existing task file** (`tasks.md`, `review-1-tasks.md`, etc.). Every new iteration of task breakdown must be saved as a separate file in `.temp/<topic>/`.
@@ -35,9 +35,9 @@ description: Breaks down a proposal, chat discussion, review findings, or a comp
 Evaluate the current state of `.temp/<topic>/` and recent chat messages. If there is any ambiguity about what to decompose, present the full menu of relevant options with your recommendation:
 
 1. **Decompose `.temp/<topic>/proposal.md` into `.temp/<topic>/tasks.md`** *(Recommended when an approved `proposal.md` exists and `tasks.md` has not been created yet)*.
-2. **Decompose directly from our chat discussion into `.temp/<topic>/tasks.md`** *(Recommended when the task was already discussed and shaped in chat and doesn't need a formal `proposal.md`)*.
+2. **Decompose directly from our chat discussion into `.temp/<topic>/tasks.md`** *(Recommended for Fast-Track small/medium features that don't need a separate `proposal.md`)*.
 3. **Convert recent `/review` findings into `.temp/<topic>/review-<N>-tasks.md`** *(Recommended right after `/review` reported issues — keeps `tasks.md` untouched and creates the next `review-N-tasks.md`)*.
-4. **Split a specific task into smaller steps in `.temp/<topic>/subtasks-<task-id>.md`** *(Recommended when the user wants finer granularity for a particular task without mutating `tasks.md`)*.
+4. **Split a specific task into smaller steps in `.temp/<topic>/subtasks-<id>.md`** *(Recommended when the user wants finer granularity for a particular task without mutating the parent file)*.
 5. **Step back to `/proposal` or `/interview` first** *(Recommended if architectural decisions or requirements are still unclear)*.
 
 - Remember: the user can ask about pros/cons or clarify any option. Answer their questions and **re-present the options** until they choose.
@@ -46,15 +46,21 @@ Evaluate the current state of `.temp/<topic>/` and recent chat messages. If ther
 
 ## 4. Core Task Breakdown Rules (CRITICAL INVARIANTS)
 
-### Invariant 1: Embedded Context Header for Fast-Track (`tasks.md`)
-When creating `.temp/<topic>/tasks.md` (especially in **Fast-Track mode** where `intent.md` and `proposal.md` were skipped), always place a compact 3–4 line header at the very top of `tasks.md`:
-```markdown
-## Context & Intent
-- **Goal**: <1–2 sentences on what is being built and why>
-- **Strategy**: <In-Place OR Expand-Contract (Parallel)>
-- **Constraints**: <Key non-breaking invariants or boundaries>
-```
-This ensures that if `/implement` or `/review` runs later in a fresh chat session without `intent.md`/`proposal.md`, the agent still has the full architectural intent right inside `tasks.md`.
+### Invariant 1: Embedded Context Header (`tasks.md`) & Parent Link (`subtasks-*.md`)
+- **When creating `.temp/<topic>/tasks.md`** (especially in **Fast-Track mode** where `intent.md` and `proposal.md` were skipped), always place a compact 3–4 line header at the very top of `tasks.md`:
+  ```markdown
+  ## Context & Intent
+  - **Goal**: <1–2 sentences on what is being built and why>
+  - **Strategy**: <In-Place OR Expand-Contract (Parallel)>
+  - **Constraints**: <Key non-breaking invariants or boundaries>
+  ```
+- **When creating a subtask file**, prevent ID collisions between `tasks.md` and `review-<M>-tasks.md`:
+  - Name the file `subtasks-<N>.md` (if splitting `Task N` from `tasks.md`) or `subtasks-r<M>-<N>.md` (if splitting `Task N` from `review-<M>-tasks.md`).
+  - Always include an explicit parent pointer on the first line after the title:
+    ```markdown
+    Parent: tasks.md#Task 3
+    ```
+    (or `Parent: review-1-tasks.md#Task 3`) so `/implement` knows the exact parent file and task to mark `[x]` when all subtasks finish.
 
 ### Invariant 2: 100% Working Project State After Every Single Task
 - Tasks must be **non-breaking vertical slices**. After completing any individual task, the project must compile cleanly and pass all existing and new tests.
@@ -62,9 +68,13 @@ This ensures that if `/implement` or `/review` runs later in a fresh chat sessio
   - *Tasks 1..K*: Build and unit-test the new method/class/module in isolation alongside the old code (zero impact on existing callers).
   - *Task K+1*: Switch callers to the new implementation and apply the chosen old-code policy (**Deprecate** or **Remove**), verifying all integration tests pass.
 
-### Invariant 3: Self-Contained Context (Zero Re-Search Cost)
+### Invariant 3: Self-Contained Context & Standard Checkbox States
 Each task must contain enough concrete context that `/implement` does not need to search the codebase from scratch:
 - **Checkbox header**: `- [ ] **Task N: <Clear Actionable Title>**`
+  - Supported status markers across the lifecycle:
+    - `- [ ]` — Pending (to be executed)
+    - `- [x]` — Completed and verified
+    - `- [-] ~~**Task N: <Title>**~~ (cancelled: <reason>)` — Cancelled / Superseded (treated as resolved by `/implement` and `/cleanup`)
 - **Target files**: Exact paths to create or modify.
 - **Context & Code Examples**: Existing signatures, interfaces, data structures, and short code snippets showing how the change fits in.
 - **Verification / Tests**: What unit/integration tests to write and run to prove the task is done.

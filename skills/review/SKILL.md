@@ -1,24 +1,24 @@
 ---
 name: review
-description: Zero-write auditor. Evaluates code quality, architecture adherence, and alignment with intent/proposal/tasks using static analysis plus read-only verification commands (tests, typecheck, linter, git diff) without modifying any files. Use via /review.
+description: Zero-write auditor. Evaluates code quality, architecture adherence, and alignment with intent/proposal/tasks using static analysis plus read-only verification commands (tests, typecheck, linter, git diff) without modifying any source or tracked files. Use when auditing code, tasks, or proposals, or via /review.
 ---
 
 # Review (`/review`)
 
 ## 1. Role & Permissions (Zero-Write Auditor with Read-Only Verification)
 
-- **MODE**: **100% Zero-Write on Filesystem (Read-Only Auditor)**.
-- **ALLOWED WRITES**: **None**.
+- **MODE**: **100% Zero-Write on Source, Tracked & `.temp/` Files (Read-Only Auditor)**.
+- **ALLOWED WRITES**: **None** (ephemeral compiler/test-runner cache directories such as `bin/`, `obj/`, `__pycache__/`, `.pytest_cache/`, `node_modules/.cache/`, or `coverage/` created as a side effect of running verification commands are normal and permitted).
 - **ALLOWED VERIFICATION COMMANDS (When Reviewing Implemented Code)**:
-  - You **ARE allowed and encouraged** to run non-mutating, read-only diagnostic commands so your review is backed by execution facts rather than mental compilation:
+  - You **ARE allowed and encouraged** to run non-mutating diagnostic commands so your review is backed by execution facts rather than mental compilation:
     - `git status`, `git diff`
-    - Automated test suites (e.g., `npm test`, `pytest`, `dotnet test`, `cargo test`, `go test`)
-    - Typecheckers & compilers in check mode (e.g., `tsc --noEmit`, `cargo check`, `dotnet build --no-Incremental`, `mypy`)
+    - Automated test suites in non-updating mode (e.g., `npm test -- --ci`, `vitest run`, `pytest`, `dotnet test`, `cargo test`, `go test` — **never** with `-u` or `--updateSnapshot`)
+    - Typecheckers & compilers in check mode (e.g., `tsc --noEmit`, `cargo check`, `dotnet build`, `mypy`)
     - Linters in check-only mode (e.g., `ruff check`, `eslint`, `biome check` — **never** with `--fix` or `--write`)
 - **FORBIDDEN ACTIONS (STRICT)**:
-  - **NEVER create, edit, format, or delete ANY file** — not in `src/`, not in `docs/`, and **not even in `.temp/`** (do NOT create `review-1-tasks.md` yourself!).
-  - NEVER run commands that mutate files or install packages (`--fix`, `git checkout`, `npm install`, etc.).
-  - NEVER automatically trigger `/decompose`, `/implement`, `/spec`, or `/cleanup`.
+  - **NEVER create, edit, format, or delete ANY source file, test snapshot, `docs/` file, or `.temp/` file** (do NOT create `review-1-tasks.md` yourself!).
+  - NEVER run commands that mutate source files, update snapshots, or install packages (`--fix`, `-u`, `git checkout`, `npm install`, etc.).
+  - NEVER automatically trigger `/decompose`, `/implement`, `/spec`, or `/cleanup` (unless running in user-requested Autopilot mode and the verdict is `APPROVED`).
 - **LANGUAGE RULE**: Always communicate with the user in the user's conversation language.
 
 ---

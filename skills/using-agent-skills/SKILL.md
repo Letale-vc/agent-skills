@@ -30,7 +30,7 @@ Incoming Task or Thought
  ├── 5. Writing code & tests (single or batch)? ─────→ /implement (TDD + [x] progress tracking)
  ├── 6. Auditing code, tasks, or proposal quality? ──→ /review    (Zero-Write auditor + test/lint check)
  ├── 7. Updating normative system documentation? ────→ /spec      (Writes docs/specifications/*.md)
- ├── 8. Cleaning up finished .temp/<topic>/ folders? → /cleanup   (Interactive ask_question cleaner)
+ ├── 8. Cleaning up finished .temp/<topic>/ folders? → /cleanup   (Interactive confirmation cleaner)
  │
  ├── [Utility] Tests failing, build broken, or bug? ─→ /debug     (Reproduce -> Localize -> Fix)
  └── [Utility] Ready to commit or clean git status? ─→ /git       (Atomic commits & .temp/ guard)
@@ -42,6 +42,13 @@ Do **NOT** force every task through all 9 stages. Recommend the shortest safe ro
 - **Small / Medium Feature (Fast-Track)**: Jump straight to `/decompose` (which embeds a compact `## Context & Intent` header directly at the top of `.temp/<topic>/tasks.md`, skipping separate `intent.md` and `proposal.md` files) → `/implement` → `/review`.
 - **Large / Architectural Feature (Full Lifecycle)**: `/interview` (or `/idea`) → `/proposal` (with optional `/intent`) → `/decompose` → `/implement` → `/review` → `/spec` → `/cleanup`.
 
+### Autopilot Mode (Zero-Stop Chaining on User Request)
+- By default, each skill stops at its Forward Handoff menu so the user stays in control.
+- **However**, if the user explicitly asks to run in **Autopilot** (e.g., *"роби до кінця"*, *"autopilot"*, *"all the way without stops"*), automatically follow the `(Recommended)` handoff path from stage to stage (e.g., `/decompose` → `/implement` Batch → `/review` → `/spec`) and **pause ONLY if**:
+  1. `/review` reports `CHANGES RECOMMENDED` or a test/build check fails,
+  2. An architectural ambiguity or breaking conflict is discovered, or
+  3. Before executing `git commit` / `git push` (`/git`) or deleting `.temp/<topic>/` (`/cleanup`).
+
 ---
 
 ## 3. Core Operating Behaviors (Non-Negotiable Across All Skills)
@@ -50,7 +57,7 @@ Do **NOT** force every task through all 9 stages. Recommend the shortest safe ro
    - Never hard-block the user if an earlier artifact in `.temp/<topic>/` is missing.
    - Present the full menu of viable options, mark one as **`(Recommended)`** with a clear reason, and allow the user to ask about pros/cons or clarify details before choosing. After answering any question, **re-present the options**.
 2. **Workspace Isolation (`.temp/<topic>/` vs. `docs/specifications/`)**:
-   - All temporary scratchpads (`intent.md`, `proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-N.md`) live strictly inside `.temp/<topic>/` (which must be in `.gitignore`).
+   - All temporary scratchpads (`intent.md`, `proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`) live strictly inside `.temp/<topic>/` (which must be in `.gitignore`).
    - `docs/specifications/` contains **only** declarative normative specifications of how the system works right now — never temporary refactoring plans.
 3. **Surface Assumptions & Manage Confusion Actively**:
    - Never silently guess when requirements or existing code conflict. Stop, name the discrepancy, and ask.
@@ -63,10 +70,12 @@ Do **NOT** force every task through all 9 stages. Recommend the shortest safe ro
 
 ---
 
-## 4. Forward Handoff & Terminal Turn Rule
+## 4. Status / Resume Mode ("Where Did I Leave Off?") & Forward Handoff
 
-When invoked directly:
-1. Assess the current state of `.temp/` and the user's request.
-2. Present 2–3 relevant entry-point skills with your **`(Recommended)`** choice and reasoning.
-3. **STOP YOUR TURN IMMEDIATELY** and wait for the user to choose.
+When invoked directly (or when the user asks *"де я зупинився?"* / *"what's the current status?"* in a new chat session):
+1. **Scan `.temp/` for Active Topics**:
+   - List each `<topic>` folder in `.temp/`, which artifacts exist (`intent.md`, `proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`), the count of completed `[x]`, cancelled `[-]`, and remaining `[ ]` tasks, and **the exact next `- [ ]` task in priority order**.
+2. **Recommend Entry Point**:
+   - Present 2–3 relevant skills (e.g., resume `/implement` on the next unchecked task, run `/review` if all tasks are `[x]`, or start a Fast-Track `/decompose`) with your **`(Recommended)`** choice and reasoning.
+3. **STOP YOUR TURN IMMEDIATELY** and wait for the user to choose (unless Autopilot was explicitly requested).
 

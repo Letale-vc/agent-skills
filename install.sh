@@ -6,14 +6,31 @@ SOURCE_DIR="$REPO_ROOT/skills"
 if [ ! -d "$SOURCE_DIR" ]; then
   SOURCE_DIR="$REPO_ROOT/.agents/skills"
 fi
+MANIFEST_NAME=".practical-agent-skills.manifest"
 
 GLOBAL=false
 SYNC_REPO=false
+ALL=false
+FORCE=false
+PRUNE=false
 TARGET=""
 SKILLS=()
 
+usage() {
+  echo "Usage:"
+  echo "  Update everywhere: ./install.sh --all [--force] [--prune]"
+  echo "  Global install:    ./install.sh --global [--force] [--prune]"
+  echo "  Project install:   ./install.sh --target /path/to/project [--force] [--prune]"
+  echo "  Single skill:      ./install.sh --target /path/to/project --skill interview"
+  echo "  Sync repo:         ./install.sh --sync-repo"
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -a|--all)
+      ALL=true
+      shift
+      ;;
     -g|--global)
       GLOBAL=true
       shift
@@ -22,67 +39,224 @@ while [[ $# -gt 0 ]]; do
       SYNC_REPO=true
       shift
       ;;
+    -f|--force)
+      FORCE=true
+      shift
+      ;;
+    -p|--prune)
+      PRUNE=true
+      shift
+      ;;
     -t|--target)
+      if [[ $# -lt 2 || "$2" == -* ]]; then
+        echo "Error: $1 requires a directory path argument." >&2
+        usage >&2
+        exit 1
+      fi
       TARGET="$2"
       shift 2
       ;;
     -s|--skill)
+      if [[ $# -lt 2 || "$2" == -* ]]; then
+        echo "Error: $1 requires a skill name argument." >&2
+        usage >&2
+        exit 1
+      fi
       SKILLS+=("$2")
       shift 2
       ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -*)
+      echo "Error: Unknown option '$1'" >&2
+      usage >&2
+      exit 1
+      ;;
     *)
-      TARGET="$1"
-      shift
+      if [ -z "$TARGET" ]; then
+        TARGET="$1"
+        shift
+      else
+        echo "Error: Unexpected positional argument '$1' (target already set to '$TARGET')." >&2
+        usage >&2
+        exit 1
+      fi
       ;;
   esac
 done
 
-if [ "$SYNC_REPO" = true ]; then
+sync_repo_link() {
+  echo "Linking .agents/skills -> skills/ via symlink..."
   mkdir -p "$REPO_ROOT/.agents"
   rm -rf "$REPO_ROOT/.agents/skills"
   ln -s "$REPO_ROOT/skills" "$REPO_ROOT/.agents/skills"
-  echo "Linked .agents/skills -> skills/ (canonical source of truth)"
+  echo "  [+] .agents/skills -> skills/ (canonical source of truth)"
+}
+
+if [ "$SYNC_REPO" = true ]; then
+  sync_repo_link
   exit 0
 fi
+
+sha256_str() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    printf "%s" "$1" | sha256sum | awk '{print $1}'
+  elif command -v shasum >/dev/null 2>&1; then
+    printf "%s" "$1" | shasum -a 256 | awk '{print $1}'
+  else
+    openssl dgst -sha256 | awk '{print $NF}'
+  fi
+}
+
+get_skill_hash() {
+  local dir="$1"
+  if [ ! -d "$dir" ]; then
+    echo ""
+    return
+  fi
+  local base
+  base="$(cd "$dir" && pwd)"
+  local lines=()
+  while IFS= read -r -d '' file; do
+    local rel="${file#"$base"/}"
+    local content_hash
+    if command -v sha256sum >/dev/null 2>&1; then
+      content_hash="$(tr -d '\r' < "$file" | sha256sum | awk '{print $1}')"
+    elif command -v shasum >/dev/null 2>&1; then
+      content_hash="$(tr -d '\r' < "$file" | shasum -a 256 | awk '{print $1}')"
+    else
+      content_hash="$(tr -d '\r' < "$file" | openssl dgst -sha256 | awk '{print $NF}')"
+    fi
+    lines+=("${rel}=${content_hash}")
+  done < <(find "$base" -type f -print0)
+
+  if [ ${#lines[@]} -eq 0 ]; then
+    echo ""
+    return
+  fi
+  local sorted
+  sorted="$(printf "%s\n" "${lines[@]}" | LC_ALL=C sort)"
+  sha256_str "$sorted"
+}
 
 install_to_dir() {
   local dest="$1"
   mkdir -p "$dest"
+  local manifest_path="$dest/$MANIFEST_NAME"
+  declare -A manifest=()
+  if [ -f "$manifest_path" ]; then
+    while IFS=' ' read -r k v || [ -n "${k:-}" ]; do
+      [[ -z "${k:-}" || "$k" == \#* ]] && continue
+      manifest["$k"]="$v"
+    done < "$manifest_path"
+  fi
+
+  local all_source_names=()
+  for folder in "$SOURCE_DIR"/*/; do
+    [ -d "$folder" ] || continue
+    all_source_names+=("$(basename "$folder")")
+  done
+
+  local target_names=()
   if [ ${#SKILLS[@]} -eq 0 ]; then
-    for folder in "$SOURCE_DIR"/*/; do
-      local name
-      name="$(basename "$folder")"
-      mkdir -p "$dest/$name"
-      cp -R "$folder"* "$dest/$name/"
-      echo "  [+] Installed /$name -> $dest/$name"
-    done
+    target_names=("${all_source_names[@]}")
   else
-    for name in "${SKILLS[@]}"; do
-      if [ -d "$SOURCE_DIR/$name" ]; then
-        mkdir -p "$dest/$name"
-        cp -R "$SOURCE_DIR/$name/"* "$dest/$name/"
-        echo "  [+] Installed /$name -> $dest/$name"
-      else
-        echo "  [!] Skill '$name' not found in $SOURCE_DIR" >&2
+    target_names=("${SKILLS[@]}")
+  fi
+
+  for name in "${target_names[@]}"; do
+    local src_folder="$SOURCE_DIR/$name"
+    if [ ! -d "$src_folder" ]; then
+      echo "  [!] Skill '$name' not found in $SOURCE_DIR" >&2
+      continue
+    fi
+    local dest_folder="$dest/$name"
+    local src_hash
+    src_hash="$(get_skill_hash "$src_folder")"
+    local dest_hash
+    dest_hash="$(get_skill_hash "$dest_folder")"
+    local recorded_hash="${manifest[$name]:-}"
+
+    if [ -n "$dest_hash" ] && [ "$dest_hash" = "$src_hash" ]; then
+      manifest["$name"]="$src_hash"
+      echo "  [=] /$name already up to date"
+      continue
+    fi
+    if [ -n "$dest_hash" ] && [ -n "$recorded_hash" ] && [ "$dest_hash" != "$recorded_hash" ] && [ "$FORCE" = false ]; then
+      echo "  [!] SKIPPED /$name: locally modified in $dest_folder (use --force to overwrite)"
+      continue
+    fi
+
+    rm -rf "$dest_folder"
+    mkdir -p "$dest_folder"
+    cp -R "$src_folder/"* "$dest_folder/"
+    manifest["$name"]="$src_hash"
+    echo "  [+] Installed /$name -> $dest_folder"
+  done
+
+  for recorded_name in "${!manifest[@]}"; do
+    local found=false
+    for sname in "${all_source_names[@]}"; do
+      if [ "$sname" = "$recorded_name" ]; then
+        found=true
+        break
       fi
     done
-  fi
+    if [ "$found" = false ]; then
+      if [ "$PRUNE" = true ]; then
+        rm -rf "$dest/$recorded_name"
+        unset 'manifest[$recorded_name]'
+        echo "  [-] Pruned stale skill /$recorded_name"
+      else
+        echo "  [!] Stale skill /$recorded_name no longer exists in this repo (use --prune to delete)"
+      fi
+    fi
+  done
+
+  {
+    echo "# Managed by Practical Agent Skills installer. Do not edit."
+    for k in $(printf "%s\n" "${!manifest[@]}" | LC_ALL=C sort); do
+      echo "$k ${manifest[$k]}"
+    done
+  } > "$manifest_path"
 }
 
-if [ "$GLOBAL" = true ]; then
+install_global() {
   echo "Installing Practical Agent Skills GLOBALLY..."
   install_to_dir "$HOME/.gemini/config/skills"
   install_to_dir "$HOME/.agents/skills"
+}
+
+if [ "$ALL" = true ]; then
+  sync_repo_link
+  install_global
+  PARENT_DIR="$(dirname "$REPO_ROOT")"
+  if [ -n "$PARENT_DIR" ] && [ -d "$PARENT_DIR" ]; then
+    for proj in "$PARENT_DIR"/*/; do
+      [ -d "$proj" ] || continue
+      proj_clean="$(cd "$proj" && pwd)"
+      if [ "$proj_clean" != "$REPO_ROOT" ] && [ -d "$proj_clean/.agents/skills" ]; then
+        echo ""
+        echo "Updating project: $proj_clean..."
+        install_to_dir "$proj_clean/.agents/skills"
+      fi
+    done
+  fi
+  echo ""
+  echo "All global and project skills updated!"
+  exit 0
+fi
+
+if [ "$GLOBAL" = true ]; then
+  install_global
   echo "Global installation complete!"
   exit 0
 fi
 
 if [ -z "$TARGET" ]; then
-  echo "Usage:"
-  echo "  Global install:  ./install.sh --global"
-  echo "  Project install: ./install.sh --target /path/to/project"
-  echo "  Single skill:    ./install.sh --target /path/to/project --skill interview"
-  echo "  Sync repo:       ./install.sh --sync-repo"
+  usage
   exit 1
 fi
 
@@ -103,4 +277,3 @@ else
 fi
 
 echo "Project installation complete!"
-

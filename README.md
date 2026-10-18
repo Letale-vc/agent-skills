@@ -32,6 +32,9 @@ npx skills add D:\practik\agent-skills --skill interview
 # Оновити ВСЮДИ однією командою (Junction у репо + глобально + у всіх сусідніх проєктах, де вже є .agents/skills)
 .\install.ps1 -All
 
+# Примусово перезаписати локально змінені скіли та видалити застарілі/перейменовані скіли
+.\install.ps1 -All -Force -Prune
+
 # Встановити ГЛОБАЛЬНО на ПК (~/.gemini/config/skills та ~/.agents/skills)
 .\install.ps1 -Global
 
@@ -48,9 +51,11 @@ npx skills add D:\practik\agent-skills --skill interview
 Для Bash (Linux / macOS / Git Bash):
 
 ```bash
-./install.sh --global
+./install.sh --all [--force] [--prune]
+./install.sh --global [--force] [--prune]
 ./install.sh --target /path/to/my-project
 ./install.sh --target /path/to/my-project --skill interview --skill proposal
+./install.sh --sync-repo
 ```
 
 ### 3. Як нативний плагін Antigravity (`agy`)
@@ -75,25 +80,26 @@ agy plugin install https://github.com/Letale-vc/agent-skills.git
 | **1** | [`/interview`](skills/interview/SKILL.md) | `Read-Only` | Виявляє приховані вимоги та межі (1 питання за раз із гіпотезою `GUESS`, оцінкою `CONFIDENCE` та жорстким лімітом **макс. 3–5 питань**, решта йде в `Assumptions`). |
 | **2** | [`/intent`](skills/intent/SKILL.md) | `Writer` (`.temp/<topic>/intent.md`) | Фіксує лаконічний Statement of Intent у `.temp/<topic>/intent.md`. |
 | **3** | [`/proposal`](skills/proposal/SKILL.md) | `Writer` (`.temp/<topic>/proposal.md`) | Створює технічний RFC, перевіряє версії залежностей і пропонує стратегію інтеграції: **Expand-Contract** (паралельна реалізація з deprecation/видаленням) або **In-Place**. |
-| **4** | [`/decompose`](skills/decompose/SKILL.md) | `Append-Writer` (`.temp/<topic>/*tasks.md`) | Розбиває план, чат-дискусію або зауваження рев'ю на неруйнівні задачі з шапкою `Context & Intent` та прикладами коду. **Ніколи не перезаписує старі файли задач** (`tasks.md`, `review-1-tasks.md`, `subtasks-1.md`). |
-| **5** | [`/implement`](skills/implement/SKILL.md) | `Writer` (`src/`, тести, `[x]`) | Виконує задачі за TDD (по одній або всі залпом), ігноруючи закриті `100% [x]` файли для економії контексту, та відмічає прогрес `[ ]` → `[x]`. |
-| **6** | [`/review`](skills/review/SKILL.md) | `Zero-Write Auditor` | Не модифікує жодних файлів, але **запускає read-only перевірки** (`git diff`, тести, тайпчекер, лінтер). При зауваженнях рекомендує `/decompose`, при успіху — `/spec` або `/cleanup`. |
+| **4** | [`/decompose`](skills/decompose/SKILL.md) | `Append-Writer` (`.temp/<topic>/*tasks.md`) | Розбиває план, чат-дискусію або зауваження рев'ю на неруйнівні задачі з шапкою `Context & Intent`, вказівником `Parent:` для підзадач та прикладами коду. **Ніколи не перезаписує старі файли задач**. |
+| **5** | [`/implement`](skills/implement/SKILL.md) | `Writer` (`src/`, тести, `[x]`/`[-]`) | Виконує задачі за суворим TDD (`Red → Green → Verify`), ігноруючи закриті `100% [x]/[-]` файли для економії контексту, та відмічає прогрес `[ ]` → `[x]` або скасування `[-]`. |
+| **6** | [`/review`](skills/review/SKILL.md) | `Zero-Write Auditor` | Не модифікує жодних вихідних чи відстежуваних файлів, але **запускає read-only перевірки** (`git diff`, тести в `--ci`, тайпчекер, лінтер). При зауваженнях рекомендує `/decompose`, при успіху — `/spec` або `/cleanup`. |
 | **7** | [`/spec`](skills/spec/SKILL.md) | `Writer` (`docs/specifications/`) | Створює або оновлює декларативні нормативні специфікації системи у `docs/specifications/` (як система працює зараз, без історії міграцій). |
-| **8** | [`/cleanup`](skills/cleanup/SKILL.md) | `Cleaner` (`.temp/`) | Показує стан тем у `.temp/` і через інтерактивний `ask_question` запитує, які завершені папки видалити, а які залишити. |
+| **8** | [`/cleanup`](skills/cleanup/SKILL.md) | `Cleaner` (`.temp/`) | Показує стан тем у `.temp/` і запитує підтвердження (через `ask_question` або текстовий fallback), які завершені папки видалити, а які залишити. |
 
-### Fast-Track маршрути (без зайвої бюрократії)
+### Fast-Track маршрути та режим Autopilot (без зайвої бюрократії)
 
-Не кожна задача потребує проходження всіх 9 етапів:
+Не кожна задача потребує проходження всіх 9 етапів або ручного підтвердження на кожному кроці:
 * **Micro-fix / Bugfix**: одразу `/debug` або `/implement`.
 * **Small / Medium Feature (Fast-Track)**: одразу `/decompose` (створює `.temp/<topic>/tasks.md` із вбудованою шапкою `## Context & Intent`, минаючи `intent.md` та `proposal.md`) → `/implement` → `/review`.
 * **Large / Architectural Feature**: `/interview` (або `/idea`) → `/proposal` → `/decompose` → `/implement` → `/review` → `/spec` → `/cleanup`.
+* **Autopilot Mode**: якщо попросити агента *«роби до кінця»* (*autopilot*), скіли автоматично переходять за рекомендованим маршрутом без проміжних зупинок і стають на паузу лише при зауваженнях `/review` (`CHANGES RECOMMENDED`), блокерах або перед `git commit` / видаленням `.temp/`.
 
 ### Мета-роутер та утиліти (Meta & Utility Skills)
 
 | Скіл | Режим&nbsp;доступу | Призначення |
 | :--- | :--- | :--- |
-| [`/using-agent-skills`](skills/using-agent-skills/SKILL.md) | `Read-Only` | Карта вибору скілів під задачу (включно з Fast-Track маршрутами) + 6 базових правил інженерної дисципліни агента. |
-| [`/debug`](skills/debug/SKILL.md) | **Diagnostic&nbsp;&amp;&nbsp;Fix** | Пошук першопричини багів за правилом `Stop-the-Line`: `Reproduce` → `Localize` → `Root Cause Hypothesis` → інтерактивний вибір способу виправлення. |
+| [`/using-agent-skills`](skills/using-agent-skills/SKILL.md) | `Read-Only` | Карта вибору скілів (Fast-Track, Autopilot), режим відновлення контексту **«Де я зупинився?»** (сканування `.temp/`) + 6 базових правил інженерної дисципліни. |
+| [`/debug`](skills/debug/SKILL.md) | **Diagnostic&nbsp;&amp;&nbsp;Fix** | Пошук першопричини багів (включно з flaky/intermittent багами) за правилом `Stop-the-Line`: `Reproduce` → `Localize` → `Root Cause Hypothesis` → фікс + тест. |
 | [`/git`](skills/git/SKILL.md) | **Git&nbsp;Operator** | Групування змін у чисті атомарні коміти з фокусом на *why*, захист від потрапляння `.temp/` у коміт та обов'язкове підтвердження перед `git commit`. |
 
 ---

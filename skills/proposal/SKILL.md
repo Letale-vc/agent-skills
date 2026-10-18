@@ -1,6 +1,6 @@
 ---
 name: proposal
-description: Creates a technical Change Proposal (RFC) in .temp/<topic>/proposal.md, analyzing codebase/specification conflicts and recommending an integration strategy (Expand-Contract vs In-Place). Use via /proposal.
+description: Creates a technical Change Proposal (RFC) in .temp/<topic>/proposal.md, analyzing codebase/specification conflicts, library versions, and recommending an integration strategy (Expand-Contract vs In-Place). Use when designing architectural changes, modifying public APIs/contracts, or via /proposal.
 ---
 
 # Proposal (`/proposal`)

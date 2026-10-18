@@ -23,9 +23,13 @@ description: Guides systematic root-cause debugging (Reproduce -> Localize -> Ro
 
 Work through Steps 1–3 before proposing or writing any fix:
 
-### Step 1: Reproduce
+### Step 1: Reproduce (Deterministic or Flaky/Intermittent)
 - Make the failure happen reliably (run the specific failing test, build command, or trace the exact input/state that triggers the bug).
 - Preserve the exact error message, stack trace, or failing assertion.
+- **If the bug does NOT reproduce deterministically (Flaky / Intermittent / Heisenbug)**:
+  - Do **NOT** guess or apply blind fixes.
+  - Inspect common non-determinism sources: race conditions / unawaited async calls, shared mutable state across tests, test execution order, clock/timezone assumptions, or resource leaks.
+  - Try running the test in stress/repeat mode or isolation; if it still cannot be triggered reliably, formulate your best hypothesis in Step 3 with `<80%` confidence and recommend **Option 3 (Targeted Diagnostic Instrumentation)** to capture runtime state on the next occurrence.
 
 ### Step 2: Localize
 - Narrow down the exact layer, module, file, and line range where actual behavior diverges from expected behavior.

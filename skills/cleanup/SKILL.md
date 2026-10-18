@@ -1,6 +1,6 @@
 ---
 name: cleanup
-description: Safely inspects and cleans up completed temporary feature folders in .temp/ after asking the user via interactive ask_question tool. Use via /cleanup.
+description: Safely inspects and cleans up completed temporary feature folders in .temp/ after explicit user confirmation (via interactive ask_question tool or numbered text prompt). Use when finishing a feature topic or via /cleanup.
 ---
 
 # Cleanup (`/cleanup`)
@@ -10,11 +10,11 @@ description: Safely inspects and cleans up completed temporary feature folders i
 - **MODE**: **Temp Cleaner**.
 - **ALLOWED ACTIONS**:
   - Inspecting `.temp/` directories and their files.
-  - Deleting specific `.temp/<topic>/` directories (or `.temp/` itself if empty) **ONLY after explicit user confirmation via the `ask_question` tool**.
+  - Deleting specific `.temp/<topic>/` directories (or `.temp/` itself if empty) **ONLY after explicit user confirmation** (via the `ask_question` tool if supported by the host environment, or via explicit numbered text confirmation in chat if `ask_question` is unavailable).
 - **FORBIDDEN ACTIONS (STRICT)**:
-  - **NEVER delete any file or folder without first asking the user via `ask_question`**.
+  - **NEVER delete any file or folder without first asking the user and receiving explicit confirmation**.
   - **NEVER delete or modify anything outside `.temp/`** (`src/`, `docs/`, root files).
-- **LANGUAGE RULE**: Always communicate with the user and write `ask_question` prompts/options in the user's conversation language.
+- **LANGUAGE RULE**: Always communicate with the user and write confirmation prompts/options in the user's conversation language.
 
 ---
 
@@ -26,10 +26,10 @@ description: Safely inspects and cleans up completed temporary feature folders i
 3. For each `<topic>` folder in `.temp/`, inspect its files (`intent.md`, `proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`) and output a brief status summary in chat:
    - Topic name: `.temp/<topic>/`
    - Files present
-   - Task status: e.g., `All tasks completed ([x])` or `Has N unfinished tasks ([ ])`
+   - Task status: e.g., `All tasks resolved ([x] / [-])` or `Has N unfinished tasks ([ ])` (note: tasks marked `- [-]` are cancelled and count as resolved, not unfinished).
 
-### Step 2: Ask the User via `ask_question` Tool (MANDATORY)
-Call the `ask_question` tool to let the user choose what to do with `.temp/`:
+### Step 2: Ask the User for Confirmation (Tool-Agnostic with Fallback)
+Use the `ask_question` tool if available in your environment; **if `ask_question` is not available (e.g., Cursor, Codex, CLI), present the numbered options in plain chat text and wait for the user's explicit reply**:
 - If there is **1 completed topic** (`.temp/<topic>/`):
   - Option 1: `(Recommended)` Delete `.temp/<topic>/` (work is complete).
   - Option 2: Keep `.temp/<topic>/` for local history (do not delete).
