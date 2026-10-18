@@ -89,6 +89,7 @@ agy plugin install https://github.com/Letale-vc/agent-skills.git
 ### Fast-Track маршрути та режим Autopilot (без зайвої бюрократії)
 
 Не кожна задача потребує проходження всіх 9 етапів або ручного підтвердження на кожному кроці:
+
 * **Micro-fix / Bugfix**: одразу `/debug` або `/implement`.
 * **Small / Medium Feature (Fast-Track)**: одразу `/decompose` (створює `.temp/<topic>/tasks.md` із вбудованою шапкою `## Context & Intent`, минаючи `intent.md` та `proposal.md`) → `/implement` → `/review`.
 * **Large / Architectural Feature**: `/interview` (або `/idea`) → `/proposal` → `/decompose` → `/implement` → `/review` → `/spec` → `/cleanup`.
