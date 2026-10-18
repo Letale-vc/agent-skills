@@ -1,0 +1,10 @@
+# Auto-normalize line endings
+* text=auto
+
+# Bash scripts and Git hooks must always have LF line endings
+*.sh text eol=lf
+.githooks/* text eol=lf
+
+# PowerShell scripts on Windows
+*.ps1 text eol=crlf
+

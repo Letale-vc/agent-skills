@@ -93,6 +93,10 @@ sync_repo_link() {
   rm -rf "$REPO_ROOT/.agents/skills"
   ln -s "$REPO_ROOT/skills" "$REPO_ROOT/.agents/skills"
   echo "  [+] .agents/skills -> skills/ (canonical source of truth)"
+  if [ -d "$REPO_ROOT/.githooks" ]; then
+    git config core.hooksPath .githooks
+    echo "  [+] Git hooks configured: core.hooksPath -> .githooks"
+  fi
 }
 
 if [ "$SYNC_REPO" = true ]; then

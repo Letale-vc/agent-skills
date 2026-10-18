@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+echo "▶ [Hook] Running pre-commit fast checks..."
+
+# Fast compilation check (if .NET project exists)
+if compgen -G "*.sln" >/dev/null 2>&1 || compgen -G "*.slnx" >/dev/null 2>&1 || compgen -G "*.csproj" >/dev/null 2>&1 || compgen -G "*/*.csproj" >/dev/null 2>&1; then
+  echo "  ↳ Building .NET project..."
+  dotnet build --configuration Release --no-restore -p:TreatWarningsAsErrors=true -v q
+
+  if [ $? -ne 0 ]; then
+    echo "❌ Build failed or contains warnings! Commit aborted."
+    echo "Please fix the errors and try committing again."
+    exit 1
+  fi
+fi
+
+# Shell script syntax check on staged files
+staged_sh_files=$(git diff --cached --name-only --diff-filter=ACMR -- ":/*.sh")
+if [ -n "$staged_sh_files" ]; then
+  echo "  ↳ Checking staged shell scripts syntax..."
+  if command -v bash >/dev/null 2>&1; then
+    while IFS= read -r f; do
+      if [ -f "$f" ]; then
+        bash -n "$f"
+        if [ $? -ne 0 ]; then
+          echo "❌ Shell script syntax error in $f! Commit aborted."
+          exit 1
+        fi
+      fi
+    done <<< "$staged_sh_files"
+    echo "✅ Shell script syntax passed."
+  fi
+fi
+
+# Markdown linting check on staged files
+staged_md_files=$(git diff --cached --name-only --diff-filter=ACMR -- ":/*.md" ":(exclude).agents/*" ":(exclude).worktrees/*" ":(exclude).temp/*")
+
+if [ -n "$staged_md_files" ]; then
+  echo "  ↳ Linting staged Markdown files..."
+  if command -v npx >/dev/null 2>&1; then
+    echo "$staged_md_files" | xargs -r npx --yes markdownlint-cli2
+    if [ $? -ne 0 ]; then
+      echo "❌ Markdown lint errors found in staged files! Commit aborted."
+      echo "Please fix formatting errors or run 'npx markdownlint-cli2 --fix <file>'."
+      exit 1
+    fi
+    echo "✅ Pre-commit markdown lint passed."
+  else
+    echo "⚠️ [Warning] 'npx' not found in PATH; skipping Markdown lint check."
+  fi
+fi
+
+echo "✅ Pre-commit build passed."
+exit 0
+

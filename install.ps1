@@ -78,6 +78,12 @@ function Sync-RepoJunction {
     }
     New-Item -ItemType Junction -Path $WorkspaceSkillsDir -Target $CanonicalSkillsDir | Out-Null
     Write-Host "  [+] .agents/skills -> skills/ (Junction ready)" -ForegroundColor Green
+
+    $GithooksDir = Join-Path $RepoRoot ".githooks"
+    if (Test-Path $GithooksDir) {
+        git config core.hooksPath .githooks
+        Write-Host "  [+] Git hooks configured: core.hooksPath -> .githooks" -ForegroundColor Green
+    }
 }
 
 if ($SyncRepo) {
