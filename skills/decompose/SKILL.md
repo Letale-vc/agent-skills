@@ -46,13 +46,23 @@ Evaluate the current state of `.temp/<topic>/` and recent chat messages. If ther
 
 ## 4. Core Task Breakdown Rules (CRITICAL INVARIANTS)
 
-### Invariant 1: 100% Working Project State After Every Single Task
+### Invariant 1: Embedded Context Header for Fast-Track (`tasks.md`)
+When creating `.temp/<topic>/tasks.md` (especially in **Fast-Track mode** where `intent.md` and `proposal.md` were skipped), always place a compact 3–4 line header at the very top of `tasks.md`:
+```markdown
+## Context & Intent
+- **Goal**: <1–2 sentences on what is being built and why>
+- **Strategy**: <In-Place OR Expand-Contract (Parallel)>
+- **Constraints**: <Key non-breaking invariants or boundaries>
+```
+This ensures that if `/implement` or `/review` runs later in a fresh chat session without `intent.md`/`proposal.md`, the agent still has the full architectural intent right inside `tasks.md`.
+
+### Invariant 2: 100% Working Project State After Every Single Task
 - Tasks must be **non-breaking vertical slices**. After completing any individual task, the project must compile cleanly and pass all existing and new tests.
 - **If `Expand-Contract` (Parallel Implementation) was chosen**:
   - *Tasks 1..K*: Build and unit-test the new method/class/module in isolation alongside the old code (zero impact on existing callers).
   - *Task K+1*: Switch callers to the new implementation and apply the chosen old-code policy (**Deprecate** or **Remove**), verifying all integration tests pass.
 
-### Invariant 2: Self-Contained Context (Zero Re-Search Cost)
+### Invariant 3: Self-Contained Context (Zero Re-Search Cost)
 Each task must contain enough concrete context that `/implement` does not need to search the codebase from scratch:
 - **Checkbox header**: `- [ ] **Task N: <Clear Actionable Title>**`
 - **Target files**: Exact paths to create or modify.

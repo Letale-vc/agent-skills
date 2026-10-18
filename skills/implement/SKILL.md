@@ -30,6 +30,8 @@ description: Executes tasks from .temp/<topic>/ using TDD (test-first, implement
      2. `review-<N>-tasks.md` (with the highest `N`, representing the latest review fixes)
      3. `tasks.md` (the primary task list)
    - State clearly which file you are executing from (e.g., `Active task file: .temp/<topic>/tasks.md`).
+3. **Context Hygiene (Token Saving)**:
+   - **NEVER read full contents of completed (`100% [x]`) task files into your context window.** Once a file has zero remaining `- [ ]` items, treat it as closed history so obsolete code snippets from earlier iterations do not pollute your context. Read only the **active task file** (plus `proposal.md`/`intent.md` if present, or the `## Context & Intent` header in `tasks.md`).
 
 ---
 

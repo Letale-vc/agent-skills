@@ -23,18 +23,24 @@ When a request arrives, identify the current stage and recommend the appropriate
 Incoming Task or Thought
  │
  ├── 0. Raw, vague, or unformed spark? ──────────────→ /idea      (100% Read-Only co-creator)
- ├── 1. Goal known, but boundaries/reqs unclear? ────→ /interview (100% Read-Only 1-by-1 Q&G)
+ ├── 1. Goal known, but boundaries/reqs unclear? ────→ /interview (100% Read-Only, max 3–5 Qs)
  ├── 2. Need to lock in Statement of Intent? ────────→ /intent    (Writes .temp/<topic>/intent.md)
  ├── 3. Designing change & migration strategy? ──────→ /proposal  (Writes .temp/<topic>/proposal.md)
  ├── 4. Breaking work into non-breaking tasks? ──────→ /decompose (Writes .temp/<topic>/*tasks.md)
  ├── 5. Writing code & tests (single or batch)? ─────→ /implement (TDD + [x] progress tracking)
- ├── 6. Auditing code, tasks, or proposal quality? ──→ /review    (100% Read-Only auditor)
+ ├── 6. Auditing code, tasks, or proposal quality? ──→ /review    (Zero-Write auditor + test/lint check)
  ├── 7. Updating normative system documentation? ────→ /spec      (Writes docs/specifications/*.md)
  ├── 8. Cleaning up finished .temp/<topic>/ folders? → /cleanup   (Interactive ask_question cleaner)
  │
  ├── [Utility] Tests failing, build broken, or bug? ─→ /debug     (Reproduce -> Localize -> Fix)
  └── [Utility] Ready to commit or clean git status? ─→ /git       (Atomic commits & .temp/ guard)
 ```
+
+### Fast-Track Routes by Task Size (Anti-Waterfall Rule)
+Do **NOT** force every task through all 9 stages. Recommend the shortest safe route based on scope:
+- **Micro-change / Bugfix**: Jump straight to `/debug` or `/implement`.
+- **Small / Medium Feature (Fast-Track)**: Jump straight to `/decompose` (which embeds a compact `## Context & Intent` header directly at the top of `.temp/<topic>/tasks.md`, skipping separate `intent.md` and `proposal.md` files) → `/implement` → `/review`.
+- **Large / Architectural Feature (Full Lifecycle)**: `/interview` (or `/idea`) → `/proposal` (with optional `/intent`) → `/decompose` → `/implement` → `/review` → `/spec` → `/cleanup`.
 
 ---
 

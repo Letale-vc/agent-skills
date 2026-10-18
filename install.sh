@@ -38,9 +38,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ "$SYNC_REPO" = true ]; then
-  mkdir -p "$REPO_ROOT/skills"
-  cp -R "$REPO_ROOT/.agents/skills/"* "$REPO_ROOT/skills/"
-  echo "Synced .agents/skills/ -> skills/"
+  mkdir -p "$REPO_ROOT/.agents"
+  rm -rf "$REPO_ROOT/.agents/skills"
+  ln -s "$REPO_ROOT/skills" "$REPO_ROOT/.agents/skills"
+  echo "Linked .agents/skills -> skills/ (canonical source of truth)"
   exit 0
 fi
 

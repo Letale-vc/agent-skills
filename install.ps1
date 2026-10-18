@@ -15,8 +15,12 @@
     .\install.ps1 -Target "D:\practik\HelplessPoeTools" -Skill interview,proposal,decompose
 
 .EXAMPLE
-    # Sync .agents/skills/ -> skills/ inside this repository after editing skills
+    # Link .agents/skills -> skills/ via Directory Junction inside this repository
     .\install.ps1 -SyncRepo
+
+.EXAMPLE
+    # Update EVERYWHERE: repo junction + global directories + all sibling projects with .agents/skills
+    .\install.ps1 -All
 #>
 param(
     [Parameter(Mandatory = $false)]
@@ -29,7 +33,10 @@ param(
     [string[]]$Skill = @(),
 
     [Parameter(Mandatory = $false)]
-    [switch]$SyncRepo
+    [switch]$SyncRepo,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$All
 )
 
 $ErrorActionPreference = "Stop"
@@ -37,7 +44,7 @@ $RepoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $CanonicalSkillsDir = Join-Path $RepoRoot "skills"
 $WorkspaceSkillsDir = Join-Path $RepoRoot ".agents\skills"
 
-if ($SyncRepo) {
+function Sync-RepoJunction {
     Write-Host "Linking .agents/skills -> skills/ via Directory Junction..." -ForegroundColor Cyan
     $AgentsDir = Join-Path $RepoRoot ".agents"
     if (-not (Test-Path $AgentsDir)) {
@@ -47,7 +54,11 @@ if ($SyncRepo) {
         Remove-Item -Path $WorkspaceSkillsDir -Recurse -Force
     }
     New-Item -ItemType Junction -Path $WorkspaceSkillsDir -Target $CanonicalSkillsDir | Out-Null
-    Write-Host "Done! .agents/skills now points directly to canonical 'skills/'." -ForegroundColor Green
+    Write-Host "  [+] .agents/skills -> skills/ (Junction ready)" -ForegroundColor Green
+}
+
+if ($SyncRepo) {
+    Sync-RepoJunction
     exit 0
 }
 
@@ -77,23 +88,46 @@ function Install-SkillsToDirectory {
     }
 }
 
-if ($Global) {
+function Install-GlobalSkills {
     $AgyGlobalSkills = Join-Path $HOME ".gemini\config\skills"
     $UniversalGlobalSkills = Join-Path $HOME ".agents\skills"
 
     Write-Host "Installing Practical Agent Skills GLOBALLY..." -ForegroundColor Cyan
     Install-SkillsToDirectory -DestinationSkillsDir $AgyGlobalSkills -SelectedSkills $Skill
     Install-SkillsToDirectory -DestinationSkillsDir $UniversalGlobalSkills -SelectedSkills $Skill
+}
+
+if ($All) {
+    Sync-RepoJunction
+    Install-GlobalSkills
+
+    $ParentDir = Split-Path -Parent $RepoRoot
+    if ($ParentDir -and (Test-Path $ParentDir)) {
+        $SiblingProjects = Get-ChildItem -Path $ParentDir -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -ne $RepoRoot -and (Test-Path (Join-Path $_.FullName ".agents\skills")) }
+        foreach ($Proj in $SiblingProjects) {
+            $ProjSkillsDir = Join-Path $Proj.FullName ".agents\skills"
+            Write-Host "`nUpdating project: $($Proj.FullName)..." -ForegroundColor Cyan
+            Install-SkillsToDirectory -DestinationSkillsDir $ProjSkillsDir -SelectedSkills $Skill
+        }
+    }
+    Write-Host "`nAll global and project skills updated!" -ForegroundColor Green
+    exit 0
+}
+
+if ($Global) {
+    Install-GlobalSkills
     Write-Host "`nGlobal installation complete!" -ForegroundColor Green
     exit 0
 }
 
 if ([string]::IsNullOrWhiteSpace($Target)) {
     Write-Host "Usage:" -ForegroundColor Yellow
-    Write-Host "  Global install:  .\install.ps1 -Global"
-    Write-Host "  Project install: .\install.ps1 -Target `"C:\path\to\project`""
-    Write-Host "  Single skill:    .\install.ps1 -Target `"C:\path\to\project`" -Skill interview,proposal"
-    Write-Host "  Sync repo:       .\install.ps1 -SyncRepo"
+    Write-Host "  Update everywhere: .\install.ps1 -All"
+    Write-Host "  Global install:    .\install.ps1 -Global"
+    Write-Host "  Project install:   .\install.ps1 -Target `"C:\path\to\project`""
+    Write-Host "  Single skill:      .\install.ps1 -Target `"C:\path\to\project`" -Skill interview,proposal"
+    Write-Host "  Sync repo:         .\install.ps1 -SyncRepo"
     exit 1
 }
 

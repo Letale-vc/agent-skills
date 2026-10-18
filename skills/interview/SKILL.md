@@ -36,18 +36,18 @@ Do NOT use in non-interactive contexts (CI, background loops).
 ## 3. Core Interview Process
 
 ### Step 1: State Your Hypothesis & Confidence
-Before asking a question, state your current best read of what the user actually wants in **one sentence**, plus an honest confidence score (`0–100%`):
+Before asking a question, state your current best read of what the user actually wants in **one sentence**, plus an honest confidence score (`0–100%`) and question counter (`Question N of max 5`):
 
 ```text
 HYPOTHESIS: <one-sentence read of what the user actually wants>
-CONFIDENCE: ~X% — <if below 70%, explain on the same line what is still missing or ambiguous>
+CONFIDENCE: ~X% (Question N/5) — <if below 70%, explain on the same line what is still missing or ambiguous>
 ```
 
-### Step 2: Ask One Question at a Time with Your Guess Attached
-Never ask a batch of questions. Ask **strictly one focused question** per turn, accompanied by your best guess (or recommendation) and the reasoning behind it:
+### Step 2: Ask One High-Impact Question at a Time with Your Guess Attached
+Never ask a batch of questions. Prioritize questions strictly by **highest architectural and behavioral impact** (never waste turns on trivial naming or minor implementation details). Ask **strictly one focused question** per turn, accompanied by your best guess (or recommendation) and the reasoning behind it:
 
 ```text
-Q: <one focused question>
+Q: <one focused high-impact question>
 GUESS: <your hypothesis or recommended option for the answer, and why>
 ```
 
@@ -55,12 +55,15 @@ GUESS: <your hypothesis or recommended option for the answer, and why>
 - If the user asks *"what do you recommend?"* or *"what are the pros and cons?"*, explain the trade-offs clearly, state your recommendation, and ask them to confirm or choose.
 - If the user uses vague buzzwords (*"scalable"*, *"clean"*, *"modern"*), probe what concrete outcome they actually need.
 
-### Step 3: The 95% Confidence Stop & Intent Restatement
-Stop asking questions as soon as you can predict the user's reactions to the next three questions you would ask (`CONFIDENCE >= 95%`).
+### Step 3: Stop Condition (`CONFIDENCE >= 95%` OR Hard Cap of 3–5 Questions)
+Because LLMs can miscalibrate percentage scores and get stuck in nitpicking loops, enforce a **dual stop condition**:
+1. **Confidence Stop**: Stop as soon as you can predict the user's answers to the next three questions (`CONFIDENCE >= 95%`).
+2. **Hard Question Cap (Max 3–5 Questions)**: Never ask more than **5 questions total** (aim for **3** on medium tasks). If minor details remain unasked when you reach the cap, do **not** ask more questions — turn those details into explicit, sensible defaults under `Assumptions` in the restatement below so the user can approve or tweak them all at once.
+
 Write back a tight restatement in the user's own language:
 
 ```text
-CONFIDENCE: ~95%+
+CONFIDENCE: ~95%+ (Interview complete)
 
 Here is what I now understand you want:
 - Outcome:      <what is being built/changed>
@@ -68,6 +71,7 @@ Here is what I now understand you want:
 - Why now:      <the problem or trigger>
 - Success:      <concrete criteria for done>
 - Constraint:   <binding limits and Always/Never rules>
+- Assumptions:  <any minor defaults assumed without extra questions, or "None">
 - Out of scope: <what we are explicitly NOT doing>
 
 Confirm (Yes / no / refine)?

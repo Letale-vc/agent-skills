@@ -1,17 +1,23 @@
 ---
 name: review
-description: Pure read-only reviewer. Evaluates code quality, architecture adherence, and alignment with intent/proposal/tasks without modifying any files or running tests. Use via /review.
+description: Zero-write auditor. Evaluates code quality, architecture adherence, and alignment with intent/proposal/tasks using static analysis plus read-only verification commands (tests, typecheck, linter, git diff) without modifying any files. Use via /review.
 ---
 
 # Review (`/review`)
 
-## 1. Role & Permissions (100% Read-Only Auditor)
+## 1. Role & Permissions (Zero-Write Auditor with Read-Only Verification)
 
-- **MODE**: **100% Read-Only**.
+- **MODE**: **100% Zero-Write on Filesystem (Read-Only Auditor)**.
 - **ALLOWED WRITES**: **None**.
+- **ALLOWED VERIFICATION COMMANDS (When Reviewing Implemented Code)**:
+  - You **ARE allowed and encouraged** to run non-mutating, read-only diagnostic commands so your review is backed by execution facts rather than mental compilation:
+    - `git status`, `git diff`
+    - Automated test suites (e.g., `npm test`, `pytest`, `dotnet test`, `cargo test`, `go test`)
+    - Typecheckers & compilers in check mode (e.g., `tsc --noEmit`, `cargo check`, `dotnet build --no-Incremental`, `mypy`)
+    - Linters in check-only mode (e.g., `ruff check`, `eslint`, `biome check` — **never** with `--fix` or `--write`)
 - **FORBIDDEN ACTIONS (STRICT)**:
-  - **NEVER create, edit, or delete ANY file** — not in `src/`, not in `docs/`, and **not even in `.temp/`** (do NOT create `review-1-tasks.md` yourself!).
-  - **NEVER run tests or build commands**. Your job is pure static inspection, architectural analysis, and recommendation.
+  - **NEVER create, edit, format, or delete ANY file** — not in `src/`, not in `docs/`, and **not even in `.temp/`** (do NOT create `review-1-tasks.md` yourself!).
+  - NEVER run commands that mutate files or install packages (`--fix`, `git checkout`, `npm install`, etc.).
   - NEVER automatically trigger `/decompose`, `/implement`, `/spec`, or `/cleanup`.
 - **LANGUAGE RULE**: Always communicate with the user in the user's conversation language.
 
@@ -24,19 +30,25 @@ description: Pure read-only reviewer. Evaluates code quality, architecture adher
    - If `.temp/` has **2+ topic folders** and it is ambiguous which one to review, list them and ask the user.
 2. **Determine What Is Being Reviewed**:
    - Infer from context (or ask the user with a recommendation if ambiguous):
-     1. **Implemented Code**: Reviewing the code changes completed via `/implement` against `.temp/<topic>/intent.md`, `proposal.md`, `tasks.md`, and `docs/specifications/`.
+     1. **Implemented Code**: Reviewing the code changes completed via `/implement` against `.temp/<topic>/` and `docs/specifications/`.
      2. **Task Breakdown (`tasks.md` / `review-N-tasks.md`)**: Auditing whether tasks are truly non-breaking vertical slices with sufficient context before implementation.
      3. **Proposal (`proposal.md`)**: Auditing the architectural RFC and migration strategy (`Expand-Contract` vs `In-Place`).
 
 ---
 
-## 3. Audit Checklist & Report Format
+## 3. Context Hygiene, Audit Checklist & Report Format
 
-Read the relevant artifacts in `.temp/<topic>/`, `docs/specifications/`, and the modified files in `src/`. Evaluate:
-1. **Intent & Proposal Alignment**: Did we build what was actually agreed in `intent.md` and `proposal.md`? Was the chosen migration strategy (`Expand-Contract` / deprecation / in-place) respected?
-2. **Non-Breaking & Edge Cases**: Are there unhandled edge cases, broken contracts, or missing test coverage?
-3. **Code Quality, Simplicity & Anti-Bloat**: Is the code readable, modular, and free of dead code? Are new abstractions earning their complexity, or can the solution be simplified into fewer, clearer lines while preserving 100% behavior?
-4. **Workspace Hygiene**: Ensure no temporary files (`SPEC.md`, `tasks/`, etc.) leaked outside `.temp/<topic>/`.
+### Context Hygiene (Token Saving in `.temp/<topic>/`)
+- Do **NOT** read every historical task file in `.temp/<topic>/` blindly.
+- Read only the latest active/just-completed task file (e.g., the highest `review-<N>-tasks.md`, or `tasks.md` if no review iterations exist) plus `proposal.md` / `intent.md` (or the `## Context & Intent` header inside `tasks.md`).
+
+### Audit Checklist
+Inspect `git diff`, the modified files in `src/`, and the relevant artifacts in `.temp/<topic>/` and `docs/specifications/`. Evaluate:
+1. **Execution & Verification Facts (for Implemented Code)**: Run the relevant test suite, typechecker, or linter in read-only mode. Did everything actually compile and pass, or did `/implement` miss a broken import, type error, or failing test?
+2. **Intent & Proposal Alignment**: Did we build what was actually agreed in `intent.md` / `proposal.md` (or the `tasks.md` context header)? Was the chosen migration strategy (`Expand-Contract` / deprecation / in-place) respected?
+3. **Non-Breaking & Edge Cases**: Are there unhandled edge cases, broken contracts, or missing test coverage?
+4. **Code Quality, Simplicity & Anti-Bloat**: Is the code readable, modular, and free of dead code? Are new abstractions earning their complexity, or can the solution be simplified into fewer, clearer lines while preserving 100% behavior?
+5. **Workspace Hygiene**: Ensure no temporary files (`SPEC.md`, `tasks/`, etc.) leaked outside `.temp/<topic>/`.
 
 ### Output Format in Chat
 Present a structured, concise report directly in the chat:
@@ -44,6 +56,7 @@ Present a structured, concise report directly in the chat:
 ```markdown
 ## Review Verdict: [APPROVED | CHANGES RECOMMENDED]
 Active topic: `.temp/<topic>/`
+Verification: `<Tests / Typecheck / Linter status, or "Static artifact audit">`
 
 ### Summary
 <1–3 sentences summarizing overall quality and alignment>
