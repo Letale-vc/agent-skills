@@ -278,7 +278,7 @@ Install-SkillsToDirectory -DestinationSkillsDir $TargetSkillsDir -SelectedSkills
 $GitIgnorePath = Join-Path $TargetRoot ".gitignore"
 if (Test-Path $GitIgnorePath) {
     $GitIgnoreContent = Get-Content $GitIgnorePath -Raw
-    if ($GitIgnoreContent -notmatch "(?m)^\.temp/?$") {
+    if ($GitIgnoreContent -notmatch "(?m)^\s*/?\.temp/?\s*$") {
         Add-Content -Path $GitIgnorePath -Value "`n.temp/"
         Write-Host "  [+] Added .temp/ to $GitIgnorePath" -ForegroundColor DarkCyan
     }

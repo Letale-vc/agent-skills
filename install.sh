@@ -295,7 +295,7 @@ fi
 
 GITIGNORE="$TARGET_ROOT/.gitignore"
 if [ -f "$GITIGNORE" ]; then
-  if ! grep -qxF ".temp/" "$GITIGNORE" && ! grep -qxF ".temp" "$GITIGNORE"; then
+  if ! tr -d '\r' < "$GITIGNORE" | grep -qxE '[[:space:]]*/?\.temp/?[[:space:]]*'; then
     printf "\n.temp/\n" >> "$GITIGNORE"
     echo "  [+] Added .temp/ to $GITIGNORE"
   fi
