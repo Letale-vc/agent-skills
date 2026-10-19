@@ -23,7 +23,7 @@ description: Breaks down a feature request, technical proposal (RFC), chat discu
 
 ## 2. Topic Resolution & `.gitignore` Guard
 
-1. Ensure `.temp/` is present in `.gitignore`.
+1. Check `.gitignore` in the project root. If no existing line already ignores it (`.temp`, `.temp/`, `/.temp/`, ignoring trailing whitespace or `\r`), append `.temp/` once; never add a duplicate entry.
 2. Inspect `.temp/`:
    - If **1 topic folder** exists or the topic is obvious from the chat, select it automatically and output: `Active topic: .temp/<topic>/`.
    - If **2+ topic folders** exist and it is ambiguous which one applies, list them and ask the user which topic to use.
@@ -47,29 +47,37 @@ Evaluate the current state of `.temp/<topic>/` and recent chat messages. If ther
 ## 4. Core Task Breakdown Rules (CRITICAL INVARIANTS)
 
 ### Invariant 1: Embedded Context Header (`tasks.md`) & Parent Link (`subtasks-*.md`)
+
 - **When creating `.temp/<topic>/tasks.md`** (especially in **Fast-Track mode** where `intent.md` and `proposal.md` were skipped), always place a compact 3–4 line header at the very top of `tasks.md`:
+
   ```markdown
   ## Context & Intent
   - **Goal**: <1–2 sentences on what is being built and why>
   - **Strategy**: <In-Place OR Expand-Contract (Parallel)>
   - **Constraints**: <Key non-breaking invariants or boundaries>
   ```
+
 - **When creating a subtask file**, prevent ID collisions between `tasks.md` and `review-<M>-tasks.md`:
   - Name the file `subtasks-<N>.md` (if splitting `Task N` from `tasks.md`) or `subtasks-r<M>-<N>.md` (if splitting `Task N` from `review-<M>-tasks.md`).
   - Always include an explicit parent pointer on the first line after the title:
+
     ```markdown
     Parent: tasks.md#Task 3
     ```
+
     (or `Parent: review-1-tasks.md#Task 3`) so `/implement` knows the exact parent file and task to mark `[x]` when all subtasks finish.
 
 ### Invariant 2: 100% Working Project State After Every Single Task
+
 - Tasks must be **non-breaking vertical slices**. After completing any individual task, the project must compile cleanly and pass all existing and new tests.
 - **If `Expand-Contract` (Parallel Implementation) was chosen**:
   - *Tasks 1..K*: Build and unit-test the new method/class/module in isolation alongside the old code (zero impact on existing callers).
   - *Task K+1*: Switch callers to the new implementation and apply the chosen old-code policy (**Deprecate** or **Remove**), verifying all integration tests pass.
 
 ### Invariant 3: Self-Contained Context & Standard Checkbox States
+
 Each task must contain enough concrete context that `/implement` does not need to search the codebase from scratch:
+
 - **Checkbox header**: `- [ ] **Task N: <Clear Actionable Title>**`
   - Supported status markers across the lifecycle:
     - `- [ ]` — Pending (to be executed)
@@ -84,6 +92,7 @@ Each task must contain enough concrete context that `/implement` does not need t
 ## 5. Forward Handoff & Terminal Turn Rule (CRITICAL)
 
 After creating the new task file (`.temp/<topic>/tasks.md`, `review-<N>-tasks.md`, or `subtasks-<id>.md`):
+
 1. Link to the newly created file and summarize the number of tasks.
 2. Ask the user how they want to execute `/implement` (with your recommendation):
    - **Option 1 — Single-Task Mode**: Execute **one task at a time** via `/implement` and pause after each task for inspection *(Recommended for complex logic or high-risk changes)*.
@@ -91,4 +100,3 @@ After creating the new task file (`.temp/<topic>/tasks.md`, `review-<N>-tasks.md
    - **Option 3**: Run `/review` on the task breakdown first, or split a specific task into smaller subtasks.
    - *Note*: If the user asks questions or pros/cons, explain and re-present these options.
 3. **STOP YOUR TURN IMMEDIATELY.** Do not start implementing tasks in this turn.
-

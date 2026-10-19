@@ -20,11 +20,13 @@ description: Extracts hidden requirements, boundaries, and actual user intent th
 ## 2. When to Use & Prerequisite Advisor
 
 Invoke or apply this skill when:
+
 - A request is missing **who** benefits, **why now**, what **success** looks like, or what the binding **constraints** are.
 - The user provides an existing draft (e.g., an intent or idea) and wants to stress-test it, uncover blind spots, or refine edge cases.
 - Two reasonable engineering values are in tension (e.g., speed vs. safety, in-place edit vs. parallel implementation) and the user hasn't chosen which to optimize for.
 
 **Prerequisite Advisor (Raw Spark vs. Testable Goal)**:
+
 - If the user has only a completely raw, unformed intuition that they cannot articulate yet (they need help generating directions rather than answering requirement questions), offer a choice with your recommendation:
   1. **(Recommended for unformed thoughts)** Switch to `/idea` first to brainstorm directions and shape the concept.
   2. Stay in `/interview` and narrow down requirements step by step.
@@ -36,6 +38,7 @@ Do NOT use in non-interactive contexts (CI, background loops).
 ## 3. Core Interview Process
 
 ### Step 1: State Your Hypothesis & Confidence
+
 Before asking a question, state your current best read of what the user actually wants in **one sentence**, plus an honest confidence score (`0–100%`) and question counter (`Question N of max 5`):
 
 ```text
@@ -44,6 +47,7 @@ CONFIDENCE: ~X% (Question N/5) — <if below 70%, explain on the same line what 
 ```
 
 ### Step 2: Ask One High-Impact Question at a Time with Your Guess Attached
+
 Never ask a batch of questions. Prioritize questions strictly by **highest architectural and behavioral impact** (never waste turns on trivial naming or minor implementation details). Ask **strictly one focused question** per turn, accompanied by your best guess (or recommendation) and the reasoning behind it:
 
 ```text
@@ -52,11 +56,14 @@ GUESS: <your hypothesis or recommended option for the answer, and why>
 ```
 
 **Wait for the user's response before asking the next question.**
+
 - If the user asks *"what do you recommend?"* or *"what are the pros and cons?"*, explain the trade-offs clearly, state your recommendation, and ask them to confirm or choose.
 - If the user uses vague buzzwords (*"scalable"*, *"clean"*, *"modern"*), probe what concrete outcome they actually need.
 
 ### Step 3: Stop Condition (`CONFIDENCE >= 95%` OR Hard Cap of 3–5 Questions)
+
 Because LLMs can miscalibrate percentage scores and get stuck in nitpicking loops, enforce a **dual stop condition**:
+
 1. **Confidence Stop**: Stop as soon as you can predict the user's answers to the next three questions (`CONFIDENCE >= 95%`).
 2. **Hard Question Cap (Max 3–5 Questions)**: Never ask more than **5 questions total** (aim for **3** on medium tasks). If minor details remain unasked when you reach the cap, do **not** ask more questions — turn those details into explicit, sensible defaults under `Assumptions` in the restatement below so the user can approve or tweak them all at once.
 
@@ -84,10 +91,10 @@ Wait for an explicit confirmation (not a vague delegation). If the user refines 
 ## 4. Forward Handoff & Terminal Turn Rule (CRITICAL)
 
 Once the user explicitly confirms the restated intent:
+
 1. **Present the confirmed Statement of Intent cleanly in chat** (do NOT write it to any file yourself).
 2. **Offer the next-step options with your recommendation**:
    - **Option 1 (Recommended)**: Invoke `/intent` to save this Statement of Intent into `.temp/<topic>/intent.md`.
    - **Option 2**: Skip `intent.md` and go directly to `/proposal` to draft the technical RFC in `.temp/<topic>/proposal.md` (useful for small, self-contained changes).
    - *Note*: The user may ask follow-up questions or pros/cons about these options before choosing; if they do, answer and re-present the options.
 3. **STOP YOUR TURN IMMEDIATELY.** Do not call file-writing tools or start downstream work in this turn.
-

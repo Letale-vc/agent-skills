@@ -21,7 +21,7 @@ description: Captures and saves a concise Statement of Intent into .temp/<topic>
 ## 2. Topic Resolution & `.gitignore` Guard
 
 1. **Ensure `.temp/` is git-ignored**:
-   - Check `.gitignore` in the project root. If `.temp/` is missing, append `.temp/` to `.gitignore`.
+   - Check `.gitignore` in the project root. If no existing line already ignores it (`.temp`, `.temp/`, `/.temp/`, ignoring trailing whitespace or `\r`), append `.temp/` once; never add a duplicate entry.
 2. **Resolve `<topic>`**:
    - Inspect existing folders inside `.temp/`.
    - If `.temp/` has **1 existing topic folder** that matches the current discussion, or if a clear topic slug (e.g., `auth-refactor`) is obvious from the conversation, select it automatically and state at the top of your reply: `Active topic: .temp/<topic>/`.
@@ -74,6 +74,7 @@ Write a clean, structured document to `.temp/<topic>/intent.md` containing:
 ## 5. Forward Handoff & Terminal Turn Rule (CRITICAL)
 
 After saving `.temp/<topic>/intent.md`:
+
 1. Link to the created file `.temp/<topic>/intent.md`.
 2. Offer the next-step options with your recommendation:
    - **Option 1 (Recommended)**: Proceed to `/proposal` to analyze codebase/spec impact, choose the migration strategy, and create `.temp/<topic>/proposal.md`.
@@ -81,4 +82,3 @@ After saving `.temp/<topic>/intent.md`:
    - **Option 3**: Refine or adjust `.temp/<topic>/intent.md`.
    - *Note*: If the user asks follow-up questions or pros/cons, explain and re-present these options.
 3. **STOP YOUR TURN IMMEDIATELY.** Wait for the user's decision.
-

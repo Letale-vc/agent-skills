@@ -39,18 +39,23 @@ description: Zero-write auditor. Evaluates code quality, architecture adherence,
 ## 3. Context Hygiene, Audit Checklist & Report Format
 
 ### Context Hygiene (Token Saving in `.temp/<topic>/`)
+
 - Do **NOT** read every historical task file in `.temp/<topic>/` blindly.
 - Read only the latest active/just-completed task file (e.g., the highest `review-<N>-tasks.md`, or `tasks.md` if no review iterations exist) plus `proposal.md` / `intent.md` (or the `## Context & Intent` header inside `tasks.md`).
 
 ### Audit Checklist
+
 Inspect `git diff`, the modified files in `src/`, and the relevant artifacts in `.temp/<topic>/` and `docs/specifications/`. Evaluate:
+
 1. **Execution & Verification Facts (for Implemented Code)**: Run the relevant test suite, typechecker, or linter in read-only mode. Did everything actually compile and pass, or did `/implement` miss a broken import, type error, or failing test?
 2. **Intent & Proposal Alignment**: Did we build what was actually agreed in `intent.md` / `proposal.md` (or the `tasks.md` context header)? Was the chosen migration strategy (`Expand-Contract` / deprecation / in-place) respected?
 3. **Non-Breaking & Edge Cases**: Are there unhandled edge cases, broken contracts, or missing test coverage?
 4. **Code Quality, Simplicity & Anti-Bloat**: Is the code readable, modular, and free of dead code? Are new abstractions earning their complexity, or can the solution be simplified into fewer, clearer lines while preserving 100% behavior?
-5. **Workspace Hygiene**: Ensure no temporary files (`SPEC.md`, `tasks/`, etc.) leaked outside `.temp/<topic>/`.
+5. **Project Rules & Specifications**: Does the change follow the project's own agent/contributor instructions (e.g., `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`: layering, naming, warnings policy, performance budgets) and keep the invariants of the affected specs in `docs/specifications/`? If a spec's behavior changed, flag that `/spec` is needed.
+6. **Workspace Hygiene**: Ensure no temporary planning files (stray `SPEC.md`, `todo.md`, `tasks/`, etc.) leaked outside `.temp/<topic>/`.
 
 ### Output Format in Chat
+
 Present a structured, concise report directly in the chat:
 
 ```markdown
@@ -83,4 +88,3 @@ Remember: **`/review` NEVER creates `review-N-tasks.md`, edits `docs/specificati
   - **Option 3**: If reviewing an intermediate task or `proposal.md`/`tasks.md`, proceed to the next step (`/implement` or `/decompose`).
 
 **STOP YOUR TURN IMMEDIATELY.** Do not call any write or command tools.
-

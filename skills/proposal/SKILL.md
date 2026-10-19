@@ -20,7 +20,7 @@ description: Creates a technical Change Proposal (RFC) in .temp/<topic>/proposal
 
 ## 2. Topic Resolution & `.gitignore` Guard
 
-1. Check `.gitignore` and ensure `.temp/` is present.
+1. Check `.gitignore` in the project root. If no existing line already ignores it (`.temp`, `.temp/`, `/.temp/`, ignoring trailing whitespace or `\r`), append `.temp/` once; never add a duplicate entry.
 2. Inspect `.temp/`:
    - If **1 topic folder** exists or the topic is obvious from the chat, select it automatically and output: `Active topic: .temp/<topic>/`.
    - If **2+ topic folders** exist and the target topic is ambiguous, list them and ask the user which topic to work on.
@@ -30,6 +30,7 @@ description: Creates a technical Change Proposal (RFC) in .temp/<topic>/proposal
 ## 3. Prerequisite Advisor (Interactive Loop)
 
 Check whether `.temp/<topic>/intent.md` exists:
+
 - **If `intent.md` exists**: Read it and proceed to Section 4.
 - **If `intent.md` does NOT exist**: Do not hard-block. Offer the user a clear choice with your recommendation based on the complexity of the request:
   1. **Run `/interview` → create `/intent` → then `/proposal`** *(Recommended if requirements and boundaries are still vague)*.
@@ -42,6 +43,7 @@ Check whether `.temp/<topic>/intent.md` exists:
 ## 4. Conflict Analysis & Migration Strategy (CRITICAL)
 
 Before finalizing `.temp/<topic>/proposal.md`:
+
 1. **Inspect existing codebase, dependency versions & `docs/specifications/`**:
    - Check if the proposed change modifies or conflicts with existing functions, classes, public APIs, or normative specs in `docs/specifications/`.
    - **Source-Driven Verification**: When proposing changes that depend on external frameworks or libraries, check the exact version in the project manifest (`package.json`, `.csproj`, `Cargo.toml`, `pyproject.toml`, `go.mod`) and verify against official documentation or existing project patterns instead of relying on stale training memory.
@@ -82,6 +84,7 @@ Write `.temp/<topic>/proposal.md` with the following sections:
 ## 6. Forward Handoff & Terminal Turn Rule (CRITICAL)
 
 After saving `.temp/<topic>/proposal.md`:
+
 1. Link to `.temp/<topic>/proposal.md` and highlight the chosen Integration Strategy (`Expand-Contract` vs `In-Place`).
 2. Offer the next-step options with your recommendation:
    - **Option 1 (Recommended)**: Decompose `proposal.md` into independent, non-breaking tasks via `/decompose` (`.temp/<topic>/tasks.md`).
@@ -89,4 +92,3 @@ After saving `.temp/<topic>/proposal.md`:
    - **Option 3**: Refine or adjust the strategy in `proposal.md`.
    - *Note*: If the user asks questions or pros/cons about any option or strategy, answer thoroughly and re-present the options.
 3. **STOP YOUR TURN IMMEDIATELY.** Wait for the user's response.
-

@@ -37,12 +37,15 @@ Incoming Task or Thought
 ```
 
 ### Fast-Track Routes by Task Size (Anti-Waterfall Rule)
+
 Do **NOT** force every task through all 9 stages. Recommend the shortest safe route based on scope:
+
 - **Micro-change / Bugfix**: Jump straight to `/debug` or `/implement`.
 - **Small / Medium Feature (Fast-Track)**: Jump straight to `/decompose` (which embeds a compact `## Context & Intent` header directly at the top of `.temp/<topic>/tasks.md`, skipping separate `intent.md` and `proposal.md` files) → `/implement` → `/review`.
 - **Large / Architectural Feature (Full Lifecycle)**: `/interview` (or `/idea`) → `/proposal` (with optional `/intent`) → `/decompose` → `/implement` → `/review` → `/spec` → `/cleanup`.
 
 ### Autopilot Mode (Zero-Stop Chaining on User Request)
+
 - By default, each skill stops at its Forward Handoff menu so the user stays in control.
 - **However**, if the user explicitly asks to run in **Autopilot** (e.g., *"роби до кінця"*, *"autopilot"*, *"all the way without stops"*), automatically follow the `(Recommended)` handoff path from stage to stage (e.g., `/decompose` → `/implement` Batch → `/review` → `/spec`) and **pause ONLY if**:
   1. `/review` reports `CHANGES RECOMMENDED` or a test/build check fails,
@@ -67,15 +70,19 @@ Do **NOT** force every task through all 9 stages. Recommend the shortest safe ro
    - Prefer the simplest solution that works. Never refactor orthogonal code, remove unfamiliar comments, or add unrequested features.
 6. **100% Working State Invariant**:
    - Every task completed in `/implement` must leave the project compiling and passing tests.
+7. **Project Instructions Take Precedence on Project Facts**:
+   - These skills are project-agnostic. Build/test commands, coding conventions, commit rules, and documentation conventions come from the project itself (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, hooks, existing docs). Read them before acting and follow them where they are more specific than a skill.
+8. **Delegated (Subagent) Execution**:
+   - When a skill runs inside a delegated subagent or another non-interactive context with no channel to the user, do **not** present menus or wait for choices. Make the `(Recommended)` choice only where it is safe and reversible, state every assumption at the top of your report, stop on blockers or architectural ambiguity instead of guessing, and return a concise report to the caller. Confirmation gates (commit, push, deleting `.temp/`) are never auto-approved in this mode.
 
 ---
 
 ## 4. Status / Resume Mode ("Where Did I Leave Off?") & Forward Handoff
 
 When invoked directly (or when the user asks *"де я зупинився?"* / *"what's the current status?"* in a new chat session):
+
 1. **Scan `.temp/` for Active Topics**:
    - List each `<topic>` folder in `.temp/`, which artifacts exist (`intent.md`, `proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`), the count of completed `[x]`, cancelled `[-]`, and remaining `[ ]` tasks, and **the exact next `- [ ]` task in priority order**.
 2. **Recommend Entry Point**:
    - Present 2–3 relevant skills (e.g., resume `/implement` on the next unchecked task, run `/review` if all tasks are `[x]`, or start a Fast-Track `/decompose`) with your **`(Recommended)`** choice and reasoning.
 3. **STOP YOUR TURN IMMEDIATELY** and wait for the user to choose (unless Autopilot was explicitly requested).
-

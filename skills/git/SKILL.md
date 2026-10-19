@@ -21,24 +21,31 @@ description: Organizes working tree changes into clean, atomic commits with desc
 ## 2. Step-by-Step Git Workflow
 
 ### Step 1: Workspace Hygiene & `.temp/` Leak Guard
+
 1. Run `git status --short` and `git diff --stat` (plus `git log -n 5 --oneline` to see the repo's commit message style).
 2. **Verify `.temp/` Isolation**:
-   - If `.temp/` exists and is untracked/unignored, ensure `.temp/` is added to `.gitignore` before proposing commits.
+   - If `.temp/` exists and is untracked/unignored, ensure `.temp/` is added to `.gitignore` (once, without duplicating an existing entry) before proposing commits.
    - If any file inside `.temp/` is staged, unstage it immediately (`git reset HEAD .temp/`).
 
 ### Step 2: Design an Atomic Commit Plan
+
 Analyze all modified and untracked files in the working tree:
+
 - **Separate Concerns**: Do not mix refactoring, new features, bug fixes, and documentation into a single giant commit if they can be cleanly separated.
 - **Draft Why-Focused Messages**: Use Conventional Commits format:
+
   ```text
   <type>: <concise summary of what changed>
 
   <optional 1–3 line body explaining WHY the change was made and key constraints>
   ```
-  *(Allowed types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`)*
+
+  *(Types: `feat`, `fix`, `perf`, `refactor`, `test`, `docs`, `style`, `build`, `ci`, `chore`, `revert`; an optional scope `<type>(<scope>): ...` is allowed. If the repository defines its own rules — a `commit-msg` hook, commitlint config, or contributing guide — follow those instead.)*
 
 ### Step 3: Present the Commit Plan & Ask for Confirmation (MANDATORY)
+
 Show the proposed commit plan clearly in chat:
+
 ```markdown
 ## Proposed Commit Plan
 1. **Commit 1**: `<type>: <summary>`
@@ -49,6 +56,7 @@ Show the proposed commit plan clearly in chat:
 ```
 
 Then offer the user a choice with your recommendation:
+
 - **Option 1 (Recommended)**: Execute this atomic commit plan (`N` commit(s)).
 - **Option 2**: Combine all changes into a single commit instead.
 - **Option 3**: Adjust the commit message(s) or file grouping.
@@ -59,7 +67,8 @@ Then offer the user a choice with your recommendation:
 ## 3. Execution & Forward Handoff
 
 Once the user confirms:
+
 1. Run `git add <files>` and `git commit -m ...` for each approved commit.
+   - Repository hooks (`pre-commit`, `commit-msg`) may run builds, tests, or linters. **Never bypass them** (`--no-verify`). If a hook fails, report the output, fix the cause (or hand off to `/debug`), and create the commit again — do not amend an unrelated earlier commit.
 2. Run `git status --short` and `git log -n <N> --oneline` to verify the clean history.
 3. Offer next steps (e.g., whether to run `/cleanup` if `.temp/<topic>/` is still present, or push changes if desired) and **STOP YOUR TURN IMMEDIATELY**.
-

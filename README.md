@@ -94,7 +94,7 @@ agy plugin install https://github.com/Letale-vc/agent-skills.git
 | **5** | [`/implement`](skills/implement/SKILL.md) | `Writer` (`src/`, тести, `[x]`/`[-]`) | Виконує задачі за суворим TDD (`Red → Green → Verify`), ігноруючи закриті `100% [x]/[-]` файли для економії контексту, та відмічає прогрес `[ ]` → `[x]` або скасування `[-]`. |
 | **6** | [`/review`](skills/review/SKILL.md) | `Zero-Write Auditor` | Не модифікує жодних вихідних чи відстежуваних файлів, але **запускає read-only перевірки** (`git diff`, тести в `--ci`, тайпчекер, лінтер). При зауваженнях рекомендує `/decompose`, при успіху — `/spec` або `/cleanup`. |
 | **7** | [`/spec`](skills/spec/SKILL.md) | `Writer` (`docs/specifications/`) | Створює або оновлює декларативні нормативні специфікації системи у `docs/specifications/` (як система працює зараз, без історії міграцій). |
-| **8** | [`/cleanup`](skills/cleanup/SKILL.md) | `Cleaner` (`.temp/`) | Показує стан тем у `.temp/` і запитує підтвердження (через `ask_question` або текстовий fallback), які завершені папки видалити, а які залишити. |
+| **8** | [`/cleanup`](skills/cleanup/SKILL.md) | `Cleaner` (`.temp/`) | Показує стан тем у `.temp/` і запитує підтвердження (через структурований інструмент запитань хоста або текстовий fallback), які завершені папки видалити, а які залишити. |
 
 ### Fast-Track маршрути та режим Autopilot (без зайвої бюрократії)
 

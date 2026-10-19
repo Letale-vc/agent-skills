@@ -57,6 +57,7 @@ description: Executes tasks from .temp/<topic>/ using TDD (Red -> Green -> Verif
 ## 4. TDD Execution Loop & Non-Breaking Invariant
 
 For each task (`- [ ] **Task N**`):
+
 1. **Read Context & Verify Stack**:
    - Use the file paths, signatures, and code examples already embedded in the task description.
    - **Source-Driven Verification**: Never write framework/library code from stale memory. Verify the exact library version in the project manifest (`package.json`, `.csproj`, `Cargo.toml`, `pyproject.toml`, `go.mod`) and match the official documentation or established codebase patterns.
@@ -84,4 +85,3 @@ For each task (`- [ ] **Task N**`):
   - **Option 2**: Run `/git` to organize the completed changes into atomic commits.
   - **Option 3**: If there is another pending task file in `.temp/<topic>/`, proceed to it.
 - **STOP YOUR TURN IMMEDIATELY** after presenting the handoff options (unless running in user-requested Autopilot mode, in which case proceed automatically to `/review`).
-

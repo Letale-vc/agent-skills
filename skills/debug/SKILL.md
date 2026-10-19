@@ -24,6 +24,7 @@ description: Guides systematic root-cause debugging (Reproduce -> Localize -> Ro
 Work through Steps 1–3 before proposing or writing any fix:
 
 ### Step 1: Reproduce (Deterministic or Flaky/Intermittent)
+
 - Make the failure happen reliably (run the specific failing test, build command, or trace the exact input/state that triggers the bug).
 - Preserve the exact error message, stack trace, or failing assertion.
 - **If the bug does NOT reproduce deterministically (Flaky / Intermittent / Heisenbug)**:
@@ -32,10 +33,12 @@ Work through Steps 1–3 before proposing or writing any fix:
   - Try running the test in stress/repeat mode or isolation; if it still cannot be triggered reliably, formulate your best hypothesis in Step 3 with `<80%` confidence and recommend **Option 3 (Targeted Diagnostic Instrumentation)** to capture runtime state on the next occurrence.
 
 ### Step 2: Localize
+
 - Narrow down the exact layer, module, file, and line range where actual behavior diverges from expected behavior.
 - Check recent changes (`git diff` / `git log -n 5`) if this is a regression ("worked yesterday, broke today").
 
 ### Step 3: Formulate Root Cause Hypothesis
+
 Present your diagnosis clearly in chat before touching production code:
 
 ```markdown
@@ -65,10 +68,10 @@ Once the root cause is identified, present the resolution options with your reco
 ## 4. Fix Verification & Forward Handoff
 
 If the user chooses **Option 1 (Direct Fix + Regression Test)**:
+
 1. Write/update the regression test → apply the minimal fix → run the test suite to verify 100% green status.
 2. Offer the next-step options with your recommendation:
    - **Option 1 (Recommended)**: Run `/review` to verify the fix is clean and introduces no side effects.
    - **Option 2**: Run `/git` to create a clean `fix:` commit.
    - **Option 3**: Return to `/implement` if this bug occurred mid-task in `.temp/<topic>/`.
 3. **STOP YOUR TURN IMMEDIATELY.**
-
