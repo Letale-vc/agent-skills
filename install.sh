@@ -13,6 +13,7 @@ SYNC_REPO=false
 ALL=false
 FORCE=false
 PRUNE=false
+CLAUDE=false
 TARGET=""
 SKILLS=()
 
@@ -22,6 +23,7 @@ usage() {
   echo "  Global install:    ./install.sh --global [--force] [--prune]"
   echo "  Project install:   ./install.sh --target /path/to/project [--force] [--prune]"
   echo "  Single skill:      ./install.sh --target /path/to/project --skill interview"
+  echo "  Claude Code:       ./install.sh --global --claude  |  ./install.sh --target /path/to/project --claude"
   echo "  Sync repo:         ./install.sh --sync-repo"
 }
 
@@ -37,6 +39,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --sync-repo)
       SYNC_REPO=true
+      shift
+      ;;
+    -c|--claude)
+      CLAUDE=true
       shift
       ;;
     -f|--force)
@@ -228,6 +234,11 @@ install_to_dir() {
 }
 
 install_global() {
+  if [ "$CLAUDE" = true ]; then
+    echo "Installing Practical Agent Skills GLOBALLY for Claude Code..."
+    install_to_dir "$HOME/.claude/skills"
+    return
+  fi
   echo "Installing Practical Agent Skills GLOBALLY..."
   install_to_dir "$HOME/.gemini/config/skills"
   install_to_dir "$HOME/.agents/skills"
@@ -236,16 +247,25 @@ install_global() {
 if [ "$ALL" = true ]; then
   sync_repo_link
   install_global
+  # Claude Code: update the global dir only if it already exists (--claude forces it, handled above).
+  if [ "$CLAUDE" = false ] && [ -d "$HOME/.claude/skills" ]; then
+    echo ""
+    echo "Updating Claude Code global skills..."
+    install_to_dir "$HOME/.claude/skills"
+  fi
   PARENT_DIR="$(dirname "$REPO_ROOT")"
   if [ -n "$PARENT_DIR" ] && [ -d "$PARENT_DIR" ]; then
     for proj in "$PARENT_DIR"/*/; do
       [ -d "$proj" ] || continue
       proj_clean="$(cd "$proj" && pwd)"
-      if [ "$proj_clean" != "$REPO_ROOT" ] && [ -d "$proj_clean/.agents/skills" ]; then
-        echo ""
-        echo "Updating project: $proj_clean..."
-        install_to_dir "$proj_clean/.agents/skills"
-      fi
+      [ "$proj_clean" != "$REPO_ROOT" ] || continue
+      for rel in .agents/skills .claude/skills; do
+        if [ -d "$proj_clean/$rel" ]; then
+          echo ""
+          echo "Updating project: $proj_clean/$rel..."
+          install_to_dir "$proj_clean/$rel"
+        fi
+      done
     done
   fi
   echo ""
@@ -267,7 +287,11 @@ fi
 mkdir -p "$TARGET"
 TARGET_ROOT="$(cd "$TARGET" && pwd)"
 echo "Installing Practical Agent Skills into project: $TARGET_ROOT"
-install_to_dir "$TARGET_ROOT/.agents/skills"
+if [ "$CLAUDE" = true ]; then
+  install_to_dir "$TARGET_ROOT/.claude/skills"
+else
+  install_to_dir "$TARGET_ROOT/.agents/skills"
+fi
 
 GITIGNORE="$TARGET_ROOT/.gitignore"
 if [ -f "$GITIGNORE" ]; then

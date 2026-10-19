@@ -44,6 +44,12 @@ npx skills add D:\practik\agent-skills --skill interview
 # Встановити лише обрані скіли у проєкт
 .\install.ps1 -Target "D:\practik\MyProject" -Skill idea,interview,proposal,decompose
 
+# Claude Code: ГЛОБАЛЬНО (~/.claude/skills)
+.\install.ps1 -Global -Claude
+
+# Claude Code: ЛОКАЛЬНО у репозиторій (<проєкт>/.claude/skills)
+.\install.ps1 -Target "D:\practik\MyProject" -Claude
+
 # Зв'язати .agents/skills -> skills/ через Directory Junction у цьому репозиторії
 .\install.ps1 -SyncRepo
 ```
@@ -56,7 +62,11 @@ npx skills add D:\practik\agent-skills --skill interview
 ./install.sh --target /path/to/my-project
 ./install.sh --target /path/to/my-project --skill interview --skill proposal
 ./install.sh --sync-repo
+./install.sh --global --claude                       # ~/.claude/skills
+./install.sh --target /path/to/my-project --claude   # <проєкт>/.claude/skills
 ```
+
+`-All` також оновлює `~/.claude/skills` та `.claude/skills` у сусідніх проєктах, якщо ці папки вже існують.
 
 ### 3. Як нативний плагін Antigravity (`agy`)
 

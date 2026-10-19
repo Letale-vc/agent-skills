@@ -21,6 +21,14 @@
     .\install.ps1 -Target "D:\practik\HelplessPoeTools" -Skill interview,proposal,decompose
 
 .EXAMPLE
+    # Install all skills globally for Claude Code (~/.claude/skills)
+    .\install.ps1 -Global -Claude
+
+.EXAMPLE
+    # Install skills locally into a repository for Claude Code (<project>/.claude/skills)
+    .\install.ps1 -Target "D:\practik\HelplessPoeTools" -Claude
+
+.EXAMPLE
     # Link .agents/skills -> skills/ via Directory Junction inside this repository
     .\install.ps1 -SyncRepo
 
@@ -47,6 +55,9 @@ param(
 
     [Parameter(Mandatory = $false)]
     [switch]$All,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$Claude,
 
     [Parameter(Mandatory = $false)]
     [switch]$Force,
@@ -194,6 +205,11 @@ function Install-SkillsToDirectory {
 }
 
 function Install-GlobalSkills {
+    if ($Claude) {
+        Write-Host "Installing Practical Agent Skills GLOBALLY for Claude Code..." -ForegroundColor Cyan
+        Install-SkillsToDirectory -DestinationSkillsDir (Join-Path $HOME ".claude\skills") -SelectedSkills $Skill
+        return
+    }
     $AgyGlobalSkills = Join-Path $HOME ".gemini\config\skills"
     $UniversalGlobalSkills = Join-Path $HOME ".agents\skills"
 
@@ -206,14 +222,24 @@ if ($All) {
     Sync-RepoJunction
     Install-GlobalSkills
 
+    # Claude Code: update the global dir only if it already exists (-Claude forces it, handled above).
+    $ClaudeGlobalSkills = Join-Path $HOME ".claude\skills"
+    if (-not $Claude -and (Test-Path $ClaudeGlobalSkills)) {
+        Write-Host "`nUpdating Claude Code global skills..." -ForegroundColor Cyan
+        Install-SkillsToDirectory -DestinationSkillsDir $ClaudeGlobalSkills -SelectedSkills $Skill
+    }
+
     $ParentDir = Split-Path -Parent $RepoRoot
     if ($ParentDir -and (Test-Path $ParentDir)) {
         $SiblingProjects = Get-ChildItem -Path $ParentDir -Directory -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -ne $RepoRoot -and (Test-Path (Join-Path $_.FullName ".agents\skills")) }
+            Where-Object { $_.FullName -ne $RepoRoot }
         foreach ($Proj in $SiblingProjects) {
-            $ProjSkillsDir = Join-Path $Proj.FullName ".agents\skills"
-            Write-Host "`nUpdating project: $($Proj.FullName)..." -ForegroundColor Cyan
-            Install-SkillsToDirectory -DestinationSkillsDir $ProjSkillsDir -SelectedSkills $Skill
+            foreach ($Rel in @(".agents\skills", ".claude\skills")) {
+                $ProjSkillsDir = Join-Path $Proj.FullName $Rel
+                if (-not (Test-Path $ProjSkillsDir)) { continue }
+                Write-Host "`nUpdating project: $ProjSkillsDir..." -ForegroundColor Cyan
+                Install-SkillsToDirectory -DestinationSkillsDir $ProjSkillsDir -SelectedSkills $Skill
+            }
         }
     }
     Write-Host "`nAll global and project skills updated!" -ForegroundColor Green
@@ -231,6 +257,7 @@ if ([string]::IsNullOrWhiteSpace($Target)) {
     Write-Host "  Update everywhere: .\install.ps1 -All [-Force] [-Prune]"
     Write-Host "  Global install:    .\install.ps1 -Global [-Force] [-Prune]"
     Write-Host "  Project install:   .\install.ps1 -Target `"C:\path\to\project`""
+    Write-Host "  Claude Code:       .\install.ps1 -Global -Claude  |  .\install.ps1 -Target `"C:\path\to\project`" -Claude"
     Write-Host "  Single skill:      .\install.ps1 -Target `"C:\path\to\project`" -Skill interview,proposal"
     Write-Host "  Sync repo:         .\install.ps1 -SyncRepo"
     exit 1
@@ -242,7 +269,7 @@ if (-not $ResolvedTarget) {
     $ResolvedTarget = Resolve-Path $Target
 }
 $TargetRoot = $ResolvedTarget.Path
-$TargetSkillsDir = Join-Path $TargetRoot ".agents\skills"
+$TargetSkillsDir = Join-Path $TargetRoot $(if ($Claude) { ".claude\skills" } else { ".agents\skills" })
 
 Write-Host "Installing Practical Agent Skills into project: $TargetRoot" -ForegroundColor Cyan
 Install-SkillsToDirectory -DestinationSkillsDir $TargetSkillsDir -SelectedSkills $Skill
