@@ -30,17 +30,20 @@ description: Breaks down a feature request, technical proposal (RFC), chat discu
 
 ---
 
-## 3. Prerequisite Advisor (Full Scenario Menu)
+## 3. Source Selection (Default-Proceed)
 
-Evaluate the current state of `.temp/<topic>/` and recent chat messages. If there is any ambiguity about what to decompose, present the full menu of relevant options with your recommendation:
+Pick the source from the state of `.temp/<topic>/` and the recent chat, announce it in one line, and proceed — writing a new file in `.temp/<topic>/` is safe and never overwrites anything:
 
-1. **Decompose `.temp/<topic>/proposal.md` into `.temp/<topic>/tasks.md`** *(Recommended when an approved `proposal.md` exists and `tasks.md` has not been created yet)*.
-2. **Decompose directly from our chat discussion into `.temp/<topic>/tasks.md`** *(Recommended for Fast-Track small/medium features that don't need a separate `proposal.md`)*.
-3. **Convert recent `/review` findings into `.temp/<topic>/review-<N>-tasks.md`** *(Recommended right after `/review` reported issues — keeps `tasks.md` untouched and creates the next `review-N-tasks.md`)*.
-4. **Split a specific task into smaller steps in `.temp/<topic>/subtasks-<id>.md`** *(Recommended when the user wants finer granularity for a particular task without mutating the parent file)*.
-5. **Step back to `/proposal` or `/interview` first** *(Recommended if architectural decisions or requirements are still unclear)*.
+1. **Right after `/review` reported findings** → convert the findings the user agreed to into `.temp/<topic>/review-<N>-tasks.md`.
+2. **The user asked to split a specific task** → `.temp/<topic>/subtasks-<id>.md`.
+3. **An approved `proposal.md` exists and `tasks.md` does not** → decompose `proposal.md` into `tasks.md`.
+4. **Otherwise (Fast-Track)** → decompose directly from the chat discussion into `tasks.md`.
 
-- Remember: the user can ask about pros/cons or clarify any option. Answer their questions and **re-present the options** until they choose.
+Ask the user only when the sources genuinely conflict (e.g., the chat contradicts `proposal.md`) or when requirements or architecture are still unclear — then recommend stepping back to `/interview` or `/proposal`.
+
+### Inside a Git Worktree
+
+`.temp/` is git-ignored, so a worktree does not have it. If you are inside a worktree (`git rev-parse --git-dir` differs from `git rev-parse --git-common-dir`), write task files to `.temp/<topic>/` at the worktree root (copy the topic folder from the main checkout first if it exists there). Never write to the main checkout by absolute path.
 
 ---
 
@@ -83,9 +86,24 @@ Each task must contain enough concrete context that `/implement` does not need t
     - `- [ ]` — Pending (to be executed)
     - `- [x]` — Completed and verified
     - `- [-] ~~**Task N: <Title>**~~ (cancelled: <reason>)` — Cancelled / Superseded (treated as resolved by `/implement` and `/cleanup`)
+- **Model**: `high` or `standard` — which model tier should implement the task when it is delegated:
+  - `high`: core or non-trivial logic, public APIs and contracts, concurrency, memory/unsafe/native code, security, performance-critical paths, cross-module changes, or anything hard to verify with tests.
+  - `standard`: mechanical, localized, fully specified changes (renames, wiring, UI tweaks, config, docs, adding tests for existing behavior).
+  - When in doubt, use `high`. The concrete model per tier comes from the project's instructions (e.g., in Claude Code `high` → `opus`, `standard` → `sonnet`).
 - **Target files**: Exact paths to create or modify.
-- **Context & Code Examples**: Existing signatures, interfaces, data structures, and short code snippets showing how the change fits in.
-- **Verification / Tests**: What unit/integration tests to write and run to prove the task is done.
+- **Context & Code Examples**: Existing signatures, interfaces, data structures, and short code snippets showing how the change fits in. Keep it to what `/implement` needs: reference existing code by `path:line` instead of pasting large blocks.
+- **Verification / Tests**: What unit/integration tests to write and run to prove the task is done. If part of the verification can only be done by the user (running the app, a device, a game, a visual check), add a `Manual check:` line saying exactly what to check — `/implement` pauses there in Batch mode.
+
+Example task block:
+
+```markdown
+- [ ] **Task 3: Read flask charges from the Charges component**
+  - **Model**: high
+  - **Target files**: `src/Reader/Components/Charges.cs`, `tests/Reader/ChargesTests.cs`
+  - **Context**: `Charges` mirrors `Life` (`src/Reader/Components/Life.cs:12`); offsets live in `ChargesOffsets`.
+  - **Verification**: `ChargesTests.Reads_current_and_max` fails first, then passes; full test project green.
+  - **Manual check**: in the app, the flask panel shows the same charges as the game.
+```
 
 ---
 
@@ -93,10 +111,7 @@ Each task must contain enough concrete context that `/implement` does not need t
 
 After creating the new task file (`.temp/<topic>/tasks.md`, `review-<N>-tasks.md`, or `subtasks-<id>.md`):
 
-1. Link to the newly created file and summarize the number of tasks.
-2. Ask the user how they want to execute `/implement` (with your recommendation):
-   - **Option 1 — Single-Task Mode**: Execute **one task at a time** via `/implement` and pause after each task for inspection *(Recommended for complex logic or high-risk changes)*.
-   - **Option 2 — Batch Mode (All at once)**: Execute **all tasks sequentially** via `/implement` with intermediate checks *(Recommended when tasks are clear and well-isolated)*.
-   - **Option 3**: Run `/review` on the task breakdown first, or split a specific task into smaller subtasks.
-   - *Note*: If the user asks questions or pros/cons, explain and re-present these options.
-3. **STOP YOUR TURN IMMEDIATELY.** Do not start implementing tasks in this turn.
+1. Link to the newly created file and list the tasks one line each (title, `Model` tier, and `Manual check` marker if any).
+2. This is a **checkpoint gate** (code changes start next). Ask one short question in the user's language, Batch first:
+   - *"Запускаю `/implement` у Batch (усі задачі по черзі)?"* — alternatives: Single-Task Mode (one task, then pause), or `/review` of the breakdown first.
+3. **STOP YOUR TURN IMMEDIATELY.** Do not start implementing tasks in this turn — unless the user requested Autopilot, in which case start `/implement` in Batch mode right away.

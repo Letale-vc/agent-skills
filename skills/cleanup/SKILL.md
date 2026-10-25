@@ -22,7 +22,7 @@ description: Safely inspects and cleans up completed temporary feature folders i
 
 ### Step 1: Scan & Summarize `.temp/`
 
-1. Check if `.temp/` exists and list all `<topic>` subdirectories inside it.
+1. Check if `.temp/` exists and list all `<topic>` subdirectories inside it. Inside a git worktree (`git rev-parse --git-dir` differs from `git rev-parse --git-common-dir`), this is the worktree's own copy of `.temp/`: clean only that copy, never the main checkout's `.temp/` by absolute path, and mention whether the main checkout still holds the topic.
 2. If `.temp/` does not exist or is already empty, inform the user that the workspace is already clean and stop your turn.
 3. For each `<topic>` folder in `.temp/`, inspect its files (`intent.md`, `proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`) and output a brief status summary in chat:
    - Topic name: `.temp/<topic>/`

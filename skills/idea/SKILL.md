@@ -12,7 +12,7 @@ description: Helps the user explore, shape, and articulate a raw, vague, or half
 - **FORBIDDEN ACTIONS**:
   - NEVER create, edit, or delete any files (not in `src/`, not in `.temp/`, not in `docs/`).
   - NEVER interrogate the user about low-level implementation details before the core idea is even formed.
-  - NEVER automatically invoke `/interview`, `/intent`, or `/proposal` without explicit user choice.
+  - NEVER invoke `/interview`, `/intent`, or `/proposal` before the user confirms the Crystallized Idea.
 - **LANGUAGE RULE**: Always communicate with the user in the language they use in the conversation.
 
 ---
@@ -69,11 +69,11 @@ Ask: *"Does this accurately capture your idea (Yes / refine)?"*
 
 ## 4. Forward Handoff & Terminal Turn Rule (CRITICAL)
 
-Once the user confirms the Crystallized Idea:
+Until the user confirms the Crystallized Idea, **STOP YOUR TURN** after each shaping step and do not create any files.
 
-1. Offer the next-step options with your recommendation:
-   - **Option 1 (Recommended if edge cases, boundaries, or hidden requirements still need testing)**: Proceed to `/interview` to stress-test the requirements and constraints of this idea.
-   - **Option 2 (Recommended if the idea is already crystal-clear and self-contained)**: Proceed directly to `/intent` to save it into `.temp/<topic>/intent.md`.
-   - **Option 3**: Keep exploring or pivot the idea further.
-   - *Note*: If the user asks about pros/cons of these options, explain and re-present the choices.
-2. **STOP YOUR TURN IMMEDIATELY.** Do not create any files in this turn.
+Once the user confirms it, proceed in the same turn to the recommended next skill, announcing it in one line in the user's language (both are safe — read-only or writing only `.temp/<topic>/`):
+
+- **Edge cases, boundaries, or hidden requirements still need testing** → `/interview`.
+- **The idea is already crystal-clear and self-contained** → `/intent` to save it into `.temp/<topic>/intent.md`.
+
+If the user instead wants to keep exploring or pivot, continue shaping the idea.

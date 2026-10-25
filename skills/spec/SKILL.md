@@ -26,9 +26,7 @@ Check why `/spec` was invoked:
 1. **Post-Implementation Sync (Active `.temp/<topic>/` exists)**:
    - Automatically resolve `.temp/<topic>/` (if 1 topic exists or obvious from chat; ask if 2+ topics are ambiguous).
    - Read `.temp/<topic>/intent.md`, `.temp/<topic>/proposal.md` (specifically Section 3: *Impact on System Specifications*), and the implemented code in `src/`.
-   - If the code hasn't been reviewed yet or tasks in `.temp/<topic>/` are still unchecked (`- [ ]`), offer an interactive choice with your recommendation:
-     - **Option 1 (Recommended)**: Run `/review` (or finish `/implement`) before updating `docs/specifications/`.
-     - **Option 2**: Update `docs/specifications/` right now anyway.
+   - If the code hasn't been reviewed yet or tasks in `.temp/<topic>/` are still unchecked (`- [ ]`), say so in one line and recommend `/review` (or finishing `/implement`) first. If the user explicitly invoked `/spec`, proceed with the update anyway — the specification can be adjusted after review.
 2. **Standalone Module Documentation (No `.temp/` needed)**:
    - If the user asks to document an existing module or subsystem directly, inspect the codebase in `src/` and create/update `docs/specifications/<module>.md`.
 
@@ -61,8 +59,8 @@ Use the default template below **only** when no specifications exist yet. Keep t
 After creating or updating `docs/specifications/<name>.md`:
 
 1. Link to the updated specification file(s) in `docs/specifications/` and confirm the documentation index (if the project has one) lists them.
-2. Offer the next-step options with your recommendation:
-   - **Option 1 (Recommended if `.temp/<topic>/` exists)**: Invoke `/cleanup` to inspect `.temp/` and choose whether to delete or keep `.temp/<topic>/`.
-   - **Option 2**: Refine or expand the specification in `docs/specifications/`.
-   - *Note*: If the user asks follow-up questions, answer them and re-present the options.
-3. **STOP YOUR TURN IMMEDIATELY.**
+2. **Proceed in the same turn**, announcing the step in one line:
+   - **Uncommitted changes exist** → `/git` to build the commit plan (it asks before committing).
+   - **Everything is committed and `.temp/<topic>/` exists** → `/cleanup` (it asks before deleting).
+   - **Nothing left to do** → **STOP YOUR TURN**.
+3. If the user asks to refine the specification instead, do that and **STOP YOUR TURN**.

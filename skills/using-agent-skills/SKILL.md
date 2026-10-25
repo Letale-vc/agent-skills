@@ -44,24 +44,36 @@ Do **NOT** force every task through all 9 stages. Recommend the shortest safe ro
 - **Small / Medium Feature (Fast-Track)**: Jump straight to `/decompose` (which embeds a compact `## Context & Intent` header directly at the top of `.temp/<topic>/tasks.md`, skipping separate `intent.md` and `proposal.md` files) → `/implement` → `/review`.
 - **Large / Architectural Feature (Full Lifecycle)**: `/interview` (or `/idea`) → `/proposal` (with optional `/intent`) → `/decompose` → `/implement` → `/review` → `/spec` → `/cleanup`.
 
+### Default-Proceed (No Menus for Safe Steps)
+
+Menus cost the user a turn and the agent a full context re-read. Ask only where the user's answer can actually change the outcome.
+
+- **Safe & reversible steps → just do them.** When the `(Recommended)` option is safe and reversible, take it without asking: announce it in one line in the user's language (e.g., *"→ Далі: `/review` (рекомендовано). Напиши «стоп», щоб змінити."*) and continue in the same turn. Safe & reversible means: read-only work (status scans, `/review`, lookups), creating or updating files inside `.temp/<topic>/`, picking a topic or task file the context makes obvious, and running `/implement` in Batch mode on a task file the user already approved.
+- **Gates → stop and ask one short question** (recommended answer first, at most 3 options):
+  1. **Irreversible**: before `git commit`, `git push`, `git tag`, destructive git commands, or deleting `.temp/<topic>/`.
+  2. **Decisions only the user can make**: requirements or existing code conflict, an architectural ambiguity, a breaking public contract, or a new dependency.
+  3. **Failures**: a build/test failure the circuit breaker could not fix, or a `/review` verdict of `CHANGES RECOMMENDED` (the user decides which findings to fix).
+  4. **Manual checks**: a step only the user can perform or observe (running the app, a device, a game, a UI check).
+  5. **Checkpoints**: approving a new `proposal.md` (end of `/proposal`) and starting code changes for a new task file (end of `/decompose`).
+- **After answering a user question at a gate**, restate only the pending decision in one line instead of re-printing the whole menu.
+
 ### Autopilot Mode (Zero-Stop Chaining on User Request)
 
-- By default, each skill stops at its Forward Handoff menu so the user stays in control.
-- **However**, if the user explicitly asks to run in **Autopilot** (e.g., *"роби до кінця"*, *"autopilot"*, *"all the way without stops"*), automatically follow the `(Recommended)` handoff path from stage to stage (e.g., `/decompose` → `/implement` Batch → `/review` → `/spec`) and **pause ONLY if**:
-  1. `/review` reports `CHANGES RECOMMENDED` or a test/build check fails,
-  2. An architectural ambiguity or breaking conflict is discovered, or
-  3. Before executing `git commit` / `git push` (`/git`) or deleting `.temp/<topic>/` (`/cleanup`).
+If the user explicitly asks to run in **Autopilot** (e.g., *"роби до кінця"*, *"autopilot"*, *"all the way without stops"*), also pass the **checkpoint** gates (5) by taking the `(Recommended)` option, following the handoff path from stage to stage (e.g., `/decompose` → `/implement` Batch → `/review` → `/spec`). Gates 1–4 still stop the run.
 
 ---
 
 ## 3. Core Operating Behaviors (Non-Negotiable Across All Skills)
 
-1. **Interactive Advisors Over Rigid Blocks**:
-   - Never hard-block the user if an earlier artifact in `.temp/<topic>/` is missing.
-   - Present the full menu of viable options, mark one as **`(Recommended)`** with a clear reason, and allow the user to ask about pros/cons or clarify details before choosing. After answering any question, **re-present the options**.
+1. **Advisors Over Rigid Blocks, Default-Proceed Over Menus**:
+   - Never hard-block the user if an earlier artifact in `.temp/<topic>/` is missing; pick the recommended route instead.
+   - Follow the Default-Proceed rule (Section 2): take safe & reversible `(Recommended)` steps with a one-line announcement, and ask only at gates. The user can always ask about pros/cons or override a step.
 2. **Workspace Isolation (`.temp/<topic>/` vs. `docs/specifications/`)**:
    - All temporary scratchpads (`intent.md`, `proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`) live strictly inside `.temp/<topic>/` (which must be in `.gitignore`).
    - `docs/specifications/` contains **only** declarative normative specifications of how the system works right now — never temporary refactoring plans.
+   - **Git worktrees do not contain `.temp/`** (it is git-ignored), so the main checkout's `.temp/<topic>/` is the source of truth:
+     - **Delegating into a worktree** (subagent or parallel session): put the full task text and the `## Context & Intent` header (or the relevant `proposal.md` excerpt) into the prompt. The worker never reads or writes `.temp/`; the orchestrator in the main checkout updates the checkboxes from the worker's report.
+     - **Working inside a worktree yourself** (detect it: `git rev-parse --git-dir` differs from `git rev-parse --git-common-dir`): use `.temp/<topic>/` at the worktree root. If it is missing, copy the topic folder from the main checkout once (reading the main checkout is fine), then write only to the worktree copy. Never write, `cd`, or run commands against the main checkout by absolute path — it breaks isolation and the host may block it. When the work is merged, report which task files changed so the main checkout's copy can be synced.
 3. **Surface Assumptions & Manage Confusion Actively**:
    - Never silently guess when requirements or existing code conflict. Stop, name the discrepancy, and ask.
 4. **Push Back When Warranted (Zero Sycophancy)**:
@@ -74,6 +86,10 @@ Do **NOT** force every task through all 9 stages. Recommend the shortest safe ro
    - These skills are project-agnostic. Build/test commands, coding conventions, commit rules, and documentation conventions come from the project itself (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, hooks, existing docs). Read them before acting and follow them where they are more specific than a skill.
 8. **Delegated (Subagent) Execution**:
    - When a skill runs inside a delegated subagent or another non-interactive context with no channel to the user, do **not** present menus or wait for choices. Make the `(Recommended)` choice only where it is safe and reversible, state every assumption at the top of your report, stop on blockers or architectural ambiguity instead of guessing, and return a concise report to the caller. Confirmation gates (commit, push, deleting `.temp/`) are never auto-approved in this mode.
+   - **Model routing**: when delegating a task that carries a `**Model**:` tag (set by `/decompose`), pick the subagent model from that tag using the project's mapping (e.g., in Claude Code `high` → `opus`, `standard` → `sonnet`). An explicit user instruction overrides the tag; a missing tag counts as `high`.
+9. **Context Hygiene (Token Budget)**:
+   - Every turn re-reads the whole conversation, so a file read once costs tokens on every later turn. Keep `proposal.md` within its size budget (see `/proposal`) and task blocks concise.
+   - For a file longer than ~300 lines, list its headings first (e.g., grep for `^#`) and read only the sections you need (offset/limit). Never re-read a file that has not changed since you read it in this session; use what is already in context.
 
 ---
 
@@ -84,5 +100,5 @@ When invoked directly (or when the user asks *"де я зупинився?"* / *
 1. **Scan `.temp/` for Active Topics**:
    - List each `<topic>` folder in `.temp/`, which artifacts exist (`intent.md`, `proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`), the count of completed `[x]`, cancelled `[-]`, and remaining `[ ]` tasks, and **the exact next `- [ ]` task in priority order**.
 2. **Recommend Entry Point**:
-   - Present 2–3 relevant skills (e.g., resume `/implement` on the next unchecked task, run `/review` if all tasks are `[x]`, or start a Fast-Track `/decompose`) with your **`(Recommended)`** choice and reasoning.
-3. **STOP YOUR TURN IMMEDIATELY** and wait for the user to choose (unless Autopilot was explicitly requested).
+   - Name the single **`(Recommended)`** next step with a one-line reason (e.g., resume `/implement` Batch on the next unchecked task, run `/review` if all tasks are `[x]`, or start a Fast-Track `/decompose`), plus at most one alternative.
+3. **STOP YOUR TURN IMMEDIATELY** and wait for the user's go-ahead (unless Autopilot was explicitly requested): a status question is answered, not acted on.

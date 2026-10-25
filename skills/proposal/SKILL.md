@@ -27,16 +27,15 @@ description: Creates a technical Change Proposal (RFC) in .temp/<topic>/proposal
 
 ---
 
-## 3. Prerequisite Advisor (Interactive Loop)
+## 3. Prerequisite Advisor (Default-Proceed)
 
 Check whether `.temp/<topic>/intent.md` exists:
 
 - **If `intent.md` exists**: Read it and proceed to Section 4.
-- **If `intent.md` does NOT exist**: Do not hard-block. Offer the user a clear choice with your recommendation based on the complexity of the request:
-  1. **Run `/interview` → create `/intent` → then `/proposal`** *(Recommended if requirements and boundaries are still vague)*.
-  2. **Run `/interview` and go straight to creating `proposal.md`** *(Recommended if you want to clarify requirements interactively without saving a separate `intent.md`)*.
-  3. **Create `proposal.md` immediately from current chat context** *(Recommended if the goal and scope are already clear from our discussion)*.
-  - Allow the user to ask about pros/cons or clarify details. After answering any question, **re-present the choices** until the user selects one.
+- **If `intent.md` does NOT exist**: Do not hard-block:
+  - **Goal and scope are clear from the chat** → create `proposal.md` from the current context right away, announcing it in one line.
+  - **Requirements or boundaries are still vague** → run `/interview` first (it is read-only and asks its own questions), then return here.
+  - The user can override either choice; if they ask about pros/cons, answer and restate the pending choice in one line.
 
 ---
 
@@ -79,16 +78,22 @@ Write `.temp/<topic>/proposal.md` with the following sections:
 - <Component boundaries, signatures/interfaces, key risks, and non-goals — no low-level implementation code>
 ```
 
+### Size Budget (Token Hygiene)
+
+`proposal.md` is re-read by `/decompose`, `/implement`, `/review`, and `/spec`, often several times, so every extra line is paid for repeatedly:
+
+- **Target ≤ 150 lines; hard cap 300 lines** (roughly 15 KB). If the design does not fit, the topic is too big: split it into separate topics (`.temp/<topic-a>/`, `.temp/<topic-b>/`), each with its own proposal, and say so.
+- Record **decisions and contracts**, not the discussion that led to them. Reference existing code and specs by `path:line` or section instead of copying them.
+- When revising after `/review` or user feedback, **edit the affected sections in place**. Do not append changelogs, "Review-N fixes" sections, or superseded alternatives.
+- Before finishing, check the line count (e.g., `wc -l`); if it is over the cap, trim before handing off.
+
 ---
 
 ## 6. Forward Handoff & Terminal Turn Rule (CRITICAL)
 
 After saving `.temp/<topic>/proposal.md`:
 
-1. Link to `.temp/<topic>/proposal.md` and highlight the chosen Integration Strategy (`Expand-Contract` vs `In-Place`).
-2. Offer the next-step options with your recommendation:
-   - **Option 1 (Recommended)**: Decompose `proposal.md` into independent, non-breaking tasks via `/decompose` (`.temp/<topic>/tasks.md`).
-   - **Option 2**: Run `/review` on `proposal.md` to stress-test the architecture before creating tasks.
-   - **Option 3**: Refine or adjust the strategy in `proposal.md`.
-   - *Note*: If the user asks questions or pros/cons about any option or strategy, answer thoroughly and re-present the options.
-3. **STOP YOUR TURN IMMEDIATELY.** Wait for the user's response.
+1. Link to `.temp/<topic>/proposal.md`, state its line count, and highlight the chosen Integration Strategy (`Expand-Contract` vs `In-Place`) plus any open decision.
+2. This is a **checkpoint gate** (the user approves the architecture). Ask one short question in the user's language, recommended answer first:
+   - *"Затверджуєш? Далі `/decompose` у `tasks.md`."* — alternatives: `/review` of `proposal.md` first, or refine the strategy.
+3. **STOP YOUR TURN IMMEDIATELY.** Wait for the user's response — unless the user requested Autopilot and no decision is open, in which case proceed to `/decompose`.

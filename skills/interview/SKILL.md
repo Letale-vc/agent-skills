@@ -12,7 +12,7 @@ description: Extracts hidden requirements, boundaries, and actual user intent th
 - **FORBIDDEN ACTIONS**:
   - NEVER create, edit, or delete any files (not in `src/`, not in `.temp/`, not in `docs/`).
   - NEVER run tests or build scripts that mutate project state.
-  - NEVER invoke downstream write skills automatically without explicit user selection.
+  - NEVER invoke downstream write skills before the user explicitly confirms the restated intent.
 - **LANGUAGE RULE**: Always communicate with the user in the language they use in the conversation.
 
 ---
@@ -27,9 +27,7 @@ Invoke or apply this skill when:
 
 **Prerequisite Advisor (Raw Spark vs. Testable Goal)**:
 
-- If the user has only a completely raw, unformed intuition that they cannot articulate yet (they need help generating directions rather than answering requirement questions), offer a choice with your recommendation:
-  1. **(Recommended for unformed thoughts)** Switch to `/idea` first to brainstorm directions and shape the concept.
-  2. Stay in `/interview` and narrow down requirements step by step.
+- If the user has only a completely raw, unformed intuition that they cannot articulate yet (they need help generating directions rather than answering requirement questions), switch to `/idea` first and say so in one line; otherwise stay in `/interview`. The user can override.
 
 Do NOT use in non-interactive contexts (CI, background loops).
 
@@ -93,8 +91,7 @@ Wait for an explicit confirmation (not a vague delegation). If the user refines 
 Once the user explicitly confirms the restated intent:
 
 1. **Present the confirmed Statement of Intent cleanly in chat** (do NOT write it to any file yourself).
-2. **Offer the next-step options with your recommendation**:
-   - **Option 1 (Recommended)**: Invoke `/intent` to save this Statement of Intent into `.temp/<topic>/intent.md`.
-   - **Option 2**: Skip `intent.md` and go directly to `/proposal` to draft the technical RFC in `.temp/<topic>/proposal.md` (useful for small, self-contained changes).
-   - *Note*: The user may ask follow-up questions or pros/cons about these options before choosing; if they do, answer and re-present the options.
-3. **STOP YOUR TURN IMMEDIATELY.** Do not call file-writing tools or start downstream work in this turn.
+2. **Proceed in the same turn to the recommended next skill**, announcing it in one line in the user's language (it only writes inside `.temp/<topic>/`, so it is safe):
+   - **Default** → `/intent` to save this Statement of Intent into `.temp/<topic>/intent.md`.
+   - **Small, self-contained change** → skip `intent.md` and go to `/proposal` (or `/decompose` for Fast-Track work that needs no RFC).
+3. Until the user confirms, **STOP YOUR TURN** after each question; do not call file-writing tools or start downstream work.

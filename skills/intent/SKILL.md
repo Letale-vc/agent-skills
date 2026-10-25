@@ -36,11 +36,10 @@ Before writing `.temp/<topic>/intent.md`, evaluate whether the intent has alread
 - **Case A — Intent was already confirmed via `/idea` / `/interview` or is crystal-clear in chat**:
   - Proceed directly to Section 4 and write `.temp/<topic>/intent.md`.
 - **Case B — Request is underspecified, ambiguous, or missing key boundaries**:
-  - Do NOT block rigidly. Present the user with choices and a clear recommendation:
-    1. **(Recommended if the idea is still raw/unformed)** Run `/idea` first to explore directions and articulate the core concept.
-    2. **(Recommended if the goal is known but boundaries/requirements need checking)** Run `/interview` first (1 question at a time) before saving `intent.md`.
-    3. **(Recommended if you want a fast draft now)** Generate a draft `.temp/<topic>/intent.md` immediately from the current context, which we can refine together.
-  - Tell the user they can pick an option or ask about pros/cons/details. If they ask a question, answer it and **re-present the options** until they choose.
+  - Do NOT block rigidly. Pick the route and announce it in one line (the user can override):
+    - **The idea is still raw/unformed** → run `/idea` first.
+    - **The goal is known but boundaries/requirements need checking** → run `/interview` first (1 question at a time), then save `intent.md`.
+    - **The user asked for a fast draft** → write a draft `.temp/<topic>/intent.md` now from the current context and refine it together.
 
 ---
 
@@ -76,9 +75,7 @@ Write a clean, structured document to `.temp/<topic>/intent.md` containing:
 After saving `.temp/<topic>/intent.md`:
 
 1. Link to the created file `.temp/<topic>/intent.md`.
-2. Offer the next-step options with your recommendation:
-   - **Option 1 (Recommended)**: Proceed to `/proposal` to analyze codebase/spec impact, choose the migration strategy, and create `.temp/<topic>/proposal.md`.
-   - **Option 2**: Skip `/proposal` and go straight to `/decompose` (`.temp/<topic>/tasks.md`) if the change is simple and requires no architectural RFC.
-   - **Option 3**: Refine or adjust `.temp/<topic>/intent.md`.
-   - *Note*: If the user asks follow-up questions or pros/cons, explain and re-present these options.
-3. **STOP YOUR TURN IMMEDIATELY.** Wait for the user's decision.
+2. **Proceed in the same turn to the recommended next skill**, announcing it in one line in the user's language (both write only inside `.temp/<topic>/` and end with their own checkpoint):
+   - **Default** → `/proposal` to analyze codebase/spec impact, choose the migration strategy, and create `.temp/<topic>/proposal.md`.
+   - **Simple change that needs no architectural RFC** → `/decompose` (`.temp/<topic>/tasks.md`).
+3. If the user asks to refine `intent.md` instead, do that and **STOP YOUR TURN**.

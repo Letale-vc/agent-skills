@@ -1,6 +1,6 @@
 ---
 name: implement
-description: Executes tasks from .temp/<topic>/ using TDD (Red -> Green -> Verify) in single-task, batch, or autopilot mode, updating task checkboxes ([x] completed or [-] cancelled). Use when writing code/tests for planned tasks or via /implement.
+description: Executes tasks from .temp/<topic>/ using TDD (Red -> Green -> Verify), in Batch mode by default (single-task on request), updating task checkboxes ([x] completed or [-] cancelled). Use when writing code/tests for planned tasks or via /implement.
 ---
 
 # Implement (`/implement`)
@@ -32,25 +32,30 @@ description: Executes tasks from .temp/<topic>/ using TDD (Red -> Green -> Verif
      2. `review-<N>-tasks.md` (with the highest `N`, representing the latest review fixes)
      3. `tasks.md` (the primary task list)
    - State clearly which file you are executing from (e.g., `Active task file: .temp/<topic>/tasks.md`).
-3. **Context Hygiene (Token Saving)**:
+3. **Inside a Git Worktree**:
+   - `.temp/` is git-ignored, so a worktree does not have it. If you are inside a worktree (`git rev-parse --git-dir` differs from `git rev-parse --git-common-dir`) and `.temp/<topic>/` is missing at the worktree root, copy the topic folder from the main checkout once and work on that copy. Never write to the main checkout by absolute path.
+4. **Context Hygiene (Token Saving)**:
    - **NEVER read full contents of resolved (`100% [x]` / `[-]`) task files into your context window.** Once a file has zero remaining `- [ ]` items, treat it as closed history so obsolete code snippets from earlier iterations do not pollute your context. Read only the **active task file** (plus `proposal.md`/`intent.md` if present, or the `## Context & Intent` header in `tasks.md`).
+   - If the active task file is longer than ~300 lines, read the `## Context & Intent` header and then only the current task block (locate `**Task N:` by search, read it by offset/limit). Read `proposal.md` by section, not in full, and never re-read a file that has not changed since you last read it.
 
 ---
 
-## 3. Prerequisite Advisor, Branch Check & Execution Mode Selection
+## 3. Prerequisite Advisor, Branch Check & Execution Mode
 
 - **If NO task file exists in `.temp/<topic>/`**:
-  - Do not start coding blindly. Present options with your recommendation:
-    1. **(Recommended)** Run `/decompose` to create `.temp/<topic>/tasks.md` from `proposal.md` or our chat context.
-    2. Run `/proposal` or `/interview` first if the design isn't settled.
-    3. Execute a direct one-off micro-fix immediately (only if the user explicitly confirms skipping `.temp/` tasks).
+  - Do not start coding blindly:
+    - **(Recommended, default)** Run `/decompose` to create `.temp/<topic>/tasks.md` from `proposal.md` or our chat context, then return here.
+    - Run `/proposal` or `/interview` first if the design isn't settled (ask the user — this is a decision gate).
+    - Execute a direct one-off micro-fix only if the user explicitly asks to skip `.temp/` tasks.
 - **Git Branch Check (When starting the first task of a feature on `main`/`master`)**:
-  - If the repo is currently on `main` or `master` and no feature branch has been created for `<topic>`, mention the current branch when asking for execution mode so the user can optionally ask to create `feat/<topic>` before coding.
-- **If execution mode (Single-Task vs. Batch) hasn't been chosen yet** (and Autopilot was not already requested):
-  - Ask the user before starting (with your recommendation):
-    1. **Single-Task Mode**: Complete the next `- [ ]` task, mark it `[x]`, and pause for inspection.
-    2. **Batch Mode (All at once)**: Complete all remaining `- [ ]` tasks sequentially, marking each `[x]` as it passes verification.
-  - Answer any follow-up/pros-cons questions and re-present the choice until the user decides.
+  - If the repo is currently on `main` or `master` and no feature branch has been created for `<topic>`, ask once whether to create `feat/<topic>` before coding (recommended: yes). On any other branch, just state it in the start line.
+- **Execution Mode — Batch by Default**:
+  - Unless the user asked for Single-Task Mode, run **Batch Mode**: complete all remaining `- [ ]` tasks of the active file sequentially, marking each `[x]` as it passes verification, without stopping between tasks.
+  - Announce it in one line in the user's language (e.g., *"Batch: задачі 3–7 з `tasks.md` по черзі. Напиши «стоп», щоб зупинитись після поточної."*) — do not ask.
+  - **Single-Task Mode** (only on request, e.g., *"по одній"*, *"single"*): complete the next `- [ ]` task, mark it `[x]`, and pause for inspection.
+- **Delegation & Model Tag**:
+  - When tasks run in subagents, give each subagent the full task text plus the `## Context & Intent` header, and choose its model from the task's `**Model**:` tag via the project's mapping (e.g., in Claude Code `high` → `opus`, `standard` → `sonnet`). A user instruction overrides the tag; a missing tag counts as `high`.
+  - A subagent working in a worktree does not touch `.temp/`; you update the checkbox after verifying its report.
 
 ---
 
@@ -70,18 +75,18 @@ For each task (`- [ ] **Task N**`):
    - **Subtask Parent Sync**: When the last remaining `- [ ]` item in a `subtasks-*.md` file is resolved (`[x]` or `[-]`), inspect the `Parent: <parent-file>#Task <M>` header at the top of `subtasks-*.md` (defaulting to `tasks.md` if omitted) and mark the corresponding parent `Task M` as `- [x]` in that exact parent file.
 4. **Mode Control**:
    - In **Single-Task Mode**: Stop after completing 1 task and run Forward Handoff.
-   - In **Batch / Autopilot Mode**: Continue to the next `- [ ]` task until all tasks in the file are resolved (`[x]` or `[-]`), stopping early only if a blocker or architectural ambiguity arises.
+   - In **Batch / Autopilot Mode**: Continue to the next `- [ ]` task until all tasks in the file are resolved (`[x]` or `[-]`). Stop early only when:
+     - a blocker or architectural ambiguity arises, or the same failure survives 3 fix attempts;
+     - a task's verification needs a **manual check** only the user can do (running the app, a device, a game, a visual UI check) — finish everything automatable first, then give the user a short numbered checklist in their language and wait for the result;
+     - the user says stop.
 
 ---
 
 ## 5. Forward Handoff & Terminal Turn Rule (CRITICAL)
 
 - **When stopping after 1 task (Single-Task Mode, with more `- [ ]` tasks remaining)**:
-  - **Option 1 (Recommended)**: Continue to the next task (`Task N+1`) in `/implement` (or switch to Batch Mode for the rest).
-  - **Option 2**: Run `/git` to create a clean atomic commit for the completed task while the project is 100% green, then continue.
-  - **Option 3**: Run `/review` on the completed task or split the upcoming task into subtasks via `/decompose`.
+  - Report the task result and name the next task in one line (recommended: continue, or switch to Batch for the rest; alternative: `/git` for an atomic commit while the project is green). **STOP YOUR TURN** and wait.
+- **When stopping early in Batch Mode** (blocker, failure, manual check): report what is done, what blocks, and the one question or checklist the user must answer. **STOP YOUR TURN**.
 - **When all tasks in the active file are resolved (`[x]` / `[-]`)**:
-  - **Option 1 (Recommended)**: Run `/review` to perform a zero-write quality, test, and architecture audit of the completed work.
-  - **Option 2**: Run `/git` to organize the completed changes into atomic commits.
-  - **Option 3**: If there is another pending task file in `.temp/<topic>/`, proceed to it.
-- **STOP YOUR TURN IMMEDIATELY** after presenting the handoff options (unless running in user-requested Autopilot mode, in which case proceed automatically to `/review`).
+  - Summarize the completed tasks (one line each) and **proceed automatically to `/review`** (zero-write, safe), announcing it in one line. If the user asked to skip review, offer `/git` instead.
+  - If another pending task file exists in `.temp/<topic>/`, mention it as the next step after the review.

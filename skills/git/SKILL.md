@@ -55,12 +55,10 @@ Show the proposed commit plan clearly in chat:
    - *Files*: `path/to/file3`
 ```
 
-Then offer the user a choice with your recommendation:
+Then ask one short confirmation question in the user's language, recommended answer first (this gate is never skipped, not even in Autopilot):
 
-- **Option 1 (Recommended)**: Execute this atomic commit plan (`N` commit(s)).
-- **Option 2**: Combine all changes into a single commit instead.
-- **Option 3**: Adjust the commit message(s) or file grouping.
-- *Note*: If the user asks questions or wants to tweak a message, update the plan and re-confirm.
+- *"Виконую план з `N` комітів?"* — alternatives: combine everything into a single commit, or adjust messages/grouping.
+- If the user asks questions or wants to tweak a message, update the plan and re-confirm in one line.
 
 ---
 
@@ -71,4 +69,4 @@ Once the user confirms:
 1. Run `git add <files>` and `git commit -m ...` for each approved commit.
    - Repository hooks (`pre-commit`, `commit-msg`) may run builds, tests, or linters. **Never bypass them** (`--no-verify`). If a hook fails, report the output, fix the cause (or hand off to `/debug`), and create the commit again — do not amend an unrelated earlier commit.
 2. Run `git status --short` and `git log -n <N> --oneline` to verify the clean history.
-3. Offer next steps (e.g., whether to run `/cleanup` if `.temp/<topic>/` is still present, or push changes if desired) and **STOP YOUR TURN IMMEDIATELY**.
+3. Name the next step in one line (e.g., `/cleanup` if the finished `.temp/<topic>/` is still present, or a push if the user wants one — both need their own confirmation) and **STOP YOUR TURN IMMEDIATELY**.
