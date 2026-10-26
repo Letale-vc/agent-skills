@@ -58,7 +58,7 @@ Inspect `git diff`, the modified files in `src/`, and the relevant artifacts in 
    - near-duplicates that should share one helper/base/parameter, especially copies that have already diverged in limits, guards, or checks (**Major**, and say which behavior looks correct);
    - repeated logic inside the diff itself (**Minor**, or **Major** if non-trivial);
    - the opposite too: speculative abstraction with a single user (**Minor**).
-   For a task breakdown or proposal, check that each task/component has a `Reuse` line backed by an actual search, and that generalize-first work is its own earlier task.
+   For a task breakdown or proposal, check that each task/component has a `Reuse` line backed by an actual search, and that generalize-first work is its own earlier task. A task with a `**Design**:` line is the exception: its detail lives in its own topic.
 6. **Project Rules & Specifications**: Does the change follow the project's own agent/contributor instructions (e.g., `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`: layering, naming, warnings policy, performance budgets) and keep the invariants of the affected specs in `docs/specifications/`? If a spec's behavior changed, flag that `/spec` is needed.
 7. **Workspace Hygiene**: Ensure no temporary planning files (stray `SPEC.md`, `todo.md`, `tasks/`, etc.) leaked outside `.temp/<topic>/`.
 
@@ -92,5 +92,6 @@ Remember: **`/review` NEVER creates `review-N-tasks.md`, edits `docs/specificati
 
 - **Case B — Zero Issues / Clean Pass (`APPROVED`)** — proceed in the same turn, announcing the step in one line:
   - **Public behavior, contracts, or APIs changed** → `/spec` to create or update the normative specification in `docs/specifications/`.
+  - **Module boundaries or dependency rules changed** (an `/architect` topic, or a proposal whose Section 5 sets dependency rules) → `/spec` too, even when the change is internal: the rules only hold if they become invariants that `/audit` and `/architect` can check.
   - **Internal refactoring/bugfix with no spec impact** → `/git` to build the commit plan (it asks before committing).
   - **Reviewed an intermediate artifact** (`proposal.md` / `tasks.md`) → the next lifecycle step (`/decompose` or `/implement`), which ends at its own checkpoint.

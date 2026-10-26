@@ -35,9 +35,10 @@ description: Breaks down a feature request, technical proposal (RFC), chat discu
 Pick the source from the state of `.temp/<topic>/` and the recent chat, announce it in one line, and proceed — writing a new file in `.temp/<topic>/` is safe and never overwrites anything:
 
 1. **Right after `/review` reported findings** → convert the findings the user agreed to into `.temp/<topic>/review-<N>-tasks.md`.
-2. **The user asked to split a specific task** → `.temp/<topic>/subtasks-<id>.md`.
-3. **An approved `proposal.md` exists and `tasks.md` does not** → decompose `proposal.md` into `tasks.md`.
-4. **Otherwise (Fast-Track)** → decompose directly from the chat discussion into `tasks.md`.
+2. **Right after `/architect` reported a roadmap** → write the steps the user chose into `.temp/arch-<area>/tasks.md` in roadmap order, so the roadmap outlives the chat (if that topic already has a `tasks.md`, use a new topic such as `arch-<area>-2` — task files are never overwritten). Header: **Goal** = the target structure in one line, **Constraints** = its dependency rules. A `tasks` step becomes normal tasks (an Expand-Contract move is several). A `/proposal` step becomes one task with the step summary, the findings it closes and a `**Design**:` line naming its own topic (Invariant 3).
+3. **The user asked to split a specific task** → `.temp/<topic>/subtasks-<id>.md`.
+4. **An approved `proposal.md` exists and `tasks.md` does not** → decompose `proposal.md` into `tasks.md`.
+5. **Otherwise (Fast-Track)** → decompose directly from the chat discussion into `tasks.md`.
 
 Ask the user only when the sources genuinely conflict (e.g., the chat contradicts `proposal.md`) or when requirements or architecture are still unclear — then recommend stepping back to `/interview` or `/proposal`.
 
@@ -49,7 +50,7 @@ Ask the user only when the sources genuinely conflict (e.g., the chat contradict
 
 ## 4. Core Task Breakdown Rules (CRITICAL INVARIANTS)
 
-### Invariant 1: Embedded Context Header (`tasks.md`) & Parent Link (`subtasks-*.md`)
+### Invariant 1: Embedded Context Header (`tasks.md`) & Parent Link (`subtasks-*.md`, Design Topics)
 
 - **When creating `.temp/<topic>/tasks.md`** (especially in **Fast-Track mode** where `intent.md` and `proposal.md` were skipped), always place a compact 3–4 line header at the very top of `tasks.md`:
 
@@ -69,6 +70,8 @@ Ask the user only when the sources genuinely conflict (e.g., the chat contradict
     ```
 
     (or `Parent: review-1-tasks.md#Task 3`) so `/implement` knows the exact parent file and task to mark `[x]` when all subtasks finish.
+
+- **When creating `tasks.md` in a topic that another task file's `**Design**:` line names** (search `.temp/` for the topic name), put `Parent: ../<that-topic>/<file>#Task N` on the line right after the `## Context & Intent` header, so `/implement` closes that roadmap task once this topic is done.
 
 ### Invariant 2: 100% Working Project State After Every Single Task
 
@@ -95,6 +98,7 @@ Each task must contain enough concrete context that `/implement` does not need t
 - **Context & Code Examples**: Existing signatures, interfaces, data structures, and short code snippets showing how the change fits in. Keep it to what `/implement` needs: reference existing code by `path:line` instead of pasting large blocks.
 - **Reuse**: Which existing code the task must call or extend instead of re-writing (`path:line`), or `none found (searched: <terms>)`. Fill it from the proposal's Reuse section or, in Fast-Track, from your own search (`/using-agent-skills`, behavior 6) — never leave `/implement` to discover it.
 - **Verification / Tests**: The smallest check that proves the task is done — one of: an existing test that already covers it (name it); one new test or one new case in an existing test for new logic that can break silently (branch, parser, math, state, contract, bug fix); `build + existing tests` for wiring, config/defaults, renames, UI text/layout, docs, or behavior-preserving refactors. Follow the test rules in `/implement` (section 4); never write "add tests" by default. If part of the verification can only be done by the user (running the app, a device, a game, a visual check), add a `Manual check:` line saying exactly what to check — `/implement` pauses there in Batch mode.
+- **Design** (only when the task's design is still open, e.g. an `/architect` step routed to `/proposal`): `**Design**: /proposal first in .temp/<own-topic>/` in place of Target files and Context, which do not exist yet. `/implement` stops before such a task instead of guessing the design.
 
 Example task block:
 
@@ -114,7 +118,7 @@ Example task block:
 
 After creating the new task file (`.temp/<topic>/tasks.md`, `review-<N>-tasks.md`, or `subtasks-<id>.md`):
 
-1. Link to the newly created file and list the tasks one line each (title, `Model` tier, and `Manual check` marker if any).
+1. Link to the newly created file and list the tasks one line each (title, `Model` tier, and `Manual check` / `Design` marker if any).
 2. This is a **checkpoint gate** (code changes start next). Ask one short question in the user's language, Batch first:
    - *"Запускаю `/implement` у Batch (усі задачі по черзі)?"* — alternatives: Single-Task Mode (one task, then pause), or `/review` of the breakdown first.
 3. **STOP YOUR TURN IMMEDIATELY.** Do not start implementing tasks in this turn — unless the user requested Autopilot, in which case start `/implement` in Batch mode right away.

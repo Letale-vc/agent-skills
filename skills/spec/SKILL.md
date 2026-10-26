@@ -26,6 +26,7 @@ Check why `/spec` was invoked:
 1. **Post-Implementation Sync (Active `.temp/<topic>/` exists)**:
    - Automatically resolve `.temp/<topic>/` (if 1 topic exists or obvious from chat; ask if 2+ topics are ambiguous).
    - Read `.temp/<topic>/intent.md`, `.temp/<topic>/proposal.md` (specifically Section 3: *Impact on System Specifications*), and the implemented code in `src/`.
+   - **Dependency rules**: an `/architect` topic (`.temp/arch-<area>/`) keeps its target dependency rules under `Constraints` in the `tasks.md` header, and a proposal keeps them in Section 5. Record each rule the code now actually follows as an invariant (e.g., "`Domain` MUST NOT depend on `Infrastructure`"), so `/audit` and later `/architect` runs treat a violation as a finding instead of a matter of taste. Rules for steps not yet implemented stay out.
    - If the code hasn't been reviewed yet or tasks in `.temp/<topic>/` are still unchecked (`- [ ]`), say so in one line and recommend `/review` (or finishing `/implement`) first. If the user explicitly invoked `/spec`, proceed with the update anyway — the specification can be adjusted after review.
 2. **Standalone Module Documentation (No `.temp/` needed)**:
    - If the user asks to document an existing module or subsystem directly, inspect the codebase in `src/` and create/update `docs/specifications/<module>.md`.
@@ -50,6 +51,7 @@ Use the default template below **only** when no specifications exist yet. Keep t
 
 ## 3. Behavioral Invariants & Rules
 - <Always/Never invariants, state transitions, error handling guarantees>
+- <Module dependency rules, when the subsystem has them: which modules may and may not depend on which>
 ```
 
 ---

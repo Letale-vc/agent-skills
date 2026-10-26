@@ -14,7 +14,7 @@ description: Zero-write quality audit of a whole repo or a named folder/package 
   - NEVER run commands that mutate the tree or install packages (`--fix`, `--write`, `-u`, `git checkout`, `npm install`).
 - **LANGUAGE RULE**: Always communicate with the user and write the whole report in the user's conversation language.
 
-**Difference from `/review`**: `/review` checks one change against its `.temp/<topic>/` plan. `/audit` judges existing code with no plan, across a folder, package or the whole repo.
+**Difference from `/review`**: `/review` checks one change against its `.temp/<topic>/` plan. `/audit` judges existing code with no plan, across a folder, package or the whole repo. Module boundaries, folder layout and extraction into libraries are `/architect`'s job.
 
 ---
 

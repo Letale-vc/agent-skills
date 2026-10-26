@@ -61,7 +61,7 @@ Once the root cause is identified, pick the route from the diagnosis and announc
 
 - **Localized, well-understood bug (confidence `≥80%`)** → fix the root cause right now and add/update a **regression test** that fails without the fix and passes with it.
 - **Confidence `<80%`, more runtime evidence needed** → add targeted diagnostic instrumentation/logging first. If reproducing needs the user (running the app, a device, a game), give them a short numbered checklist in their language and **STOP YOUR TURN**.
-- **The bug exposes a deeper architectural flaw or a breaking API issue** → this is a decision gate: recommend `/proposal` or `/decompose` for a safe multi-step fix (e.g., in `.temp/<topic>/`) instead of patching a symptom, ask one short question, and **STOP YOUR TURN**.
+- **The bug exposes a deeper architectural flaw or a breaking API issue** → this is a decision gate: recommend `/proposal` or `/decompose` for a safe multi-step fix (e.g., in `.temp/<topic>/`) instead of patching a symptom — or `/architect` when the flaw is in the structure itself (module boundaries, dependency direction, the same rule spread across modules) rather than in one contract — ask one short question, and **STOP YOUR TURN**.
 
 If the user asks about pros/cons or details of the diagnosis, answer and restate the pending route in one line.
 
