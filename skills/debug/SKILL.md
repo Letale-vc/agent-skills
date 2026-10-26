@@ -71,7 +71,7 @@ If the user asks about pros/cons or details of the diagnosis, answer and restate
 
 When fixing directly:
 
-1. Write/update the regression test → apply the minimal fix → run the test suite to verify 100% green status.
+1. Write/update the regression test → apply the minimal fix → run the test suite to verify 100% green status. Prefer adding a case to the closest existing test of that unit over a new test method or file.
 2. Next step, announced in one line:
    - **The bug occurred mid-task in `.temp/<topic>/`** → return to `/implement` and continue the active task file.
    - **The fix touches more than one module or a public contract** → proceed to `/review` (zero-write, safe).

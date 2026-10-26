@@ -70,8 +70,12 @@ For each task (`- [ ] **Task N**`):
      - small, local, covered by tests → extract the shared piece within this task and switch the existing copy to it (behavior-preserving; existing tests must stay green);
      - large, cross-module, or touching a public contract → do not duplicate silently: stop (in Batch too) and propose a generalize-first task, recommended answer first.
    - State the outcome in the task report: `Reuse: <used/extracted path>` or `Reuse: none found`.
-2. **Red → Green → Verify (Strict TDD)**:
-   - **Red (Write & Run Failing Test)**: Write or update the automated test(s) for the task (when applicable to the artifact type) and **run the test first to confirm it fails (or fails to compile) for the expected reason**. Never skip verifying the Red phase, as that leads to tautological tests that always pass.
+2. **Red → Green → Verify (TDD Where a Test Earns Its Place)**:
+   - **Does this task need a new test?** The task's `**Verification**:` line decides. Without one, write a new test only when the change adds or changes logic that can break silently: a branch, a parser, calculation or layout math, state handling, concurrency, a public contract, or a bug fix (regression test). **No new test** for wiring, renames and moves, config or default values, UI layout and text, docs, pass-through code, or behavior-preserving refactors that existing tests already cover (those tests are the safety net). Then Verify = build + the area's existing tests (+ manual check).
+   - **Extend before adding**: if a test for the same unit already exists, add a case (another `InlineData` / parameter row) or an assertion there instead of a new method or file. One test per behavior, not per method or branch.
+   - **No low-value tests**: never write tests that restate a constant or literal, mirror the implementation line by line, only assert "not null", or silently pass when the environment is missing (use the framework's skip mechanism instead of an early `return`).
+   - **Obsolete tests are part of the change**: update or delete tests that the change made wrong or redundant; do not leave them beside the new ones.
+   - **Red (Write & Run Failing Test)**: When a new or extended test is warranted, **run it first to confirm it fails (or fails to compile) for the expected reason**. Never skip verifying the Red phase, as that leads to tautological tests that always pass.
    - **Green (Implement)**: Write the minimal, clean code change required to satisfy the test and task requirements.
    - **Verify (100% Working State Invariant)**: Run the build/test suite to confirm the new test passes and zero existing tests regressed.
 3. **Update Progress Checkbox (Tool-Agnostic)**:

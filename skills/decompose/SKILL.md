@@ -94,7 +94,7 @@ Each task must contain enough concrete context that `/implement` does not need t
 - **Target files**: Exact paths to create or modify.
 - **Context & Code Examples**: Existing signatures, interfaces, data structures, and short code snippets showing how the change fits in. Keep it to what `/implement` needs: reference existing code by `path:line` instead of pasting large blocks.
 - **Reuse**: Which existing code the task must call or extend instead of re-writing (`path:line`), or `none found (searched: <terms>)`. Fill it from the proposal's Reuse section or, in Fast-Track, from your own search (`/using-agent-skills`, behavior 6) — never leave `/implement` to discover it.
-- **Verification / Tests**: What unit/integration tests to write and run to prove the task is done. If part of the verification can only be done by the user (running the app, a device, a game, a visual check), add a `Manual check:` line saying exactly what to check — `/implement` pauses there in Batch mode.
+- **Verification / Tests**: The smallest check that proves the task is done — one of: an existing test that already covers it (name it); one new test or one new case in an existing test for new logic that can break silently (branch, parser, math, state, contract, bug fix); `build + existing tests` for wiring, config/defaults, renames, UI text/layout, docs, or behavior-preserving refactors. Follow the test rules in `/implement` (section 4); never write "add tests" by default. If part of the verification can only be done by the user (running the app, a device, a game, a visual check), add a `Manual check:` line saying exactly what to check — `/implement` pauses there in Batch mode.
 
 Example task block:
 
