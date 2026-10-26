@@ -36,6 +36,7 @@ Work through Steps 1–3 before proposing or writing any fix:
 
 - Narrow down the exact layer, module, file, and line range where actual behavior diverges from expected behavior.
 - Check recent changes (`git diff` / `git log -n 5`) if this is a regression ("worked yesterday, broke today").
+- **Sibling copies**: search for other code that implements the same logic (same algorithm, same data/paths, sibling classes). The bug often lives in every copy, or exists because copies diverged. Note them in the diagnosis.
 
 ### Step 3: Formulate Root Cause Hypothesis
 
@@ -46,8 +47,11 @@ Present your diagnosis clearly in chat before touching production code:
 - **Symptom**: <What is failing>
 - **Location**: `<file_path#Lxx>`
 - **Root Cause Hypothesis**: <Why it is failing, backed by concrete evidence from code/logs>
+- **Sibling copies**: <`path:line` of code with the same logic (same bug?), or "none found">
 - **Confidence**: ~X%
 ```
+
+Fix the root cause **once, in a shared place**: if the fix needs logic that already exists elsewhere, reuse it; if the same logic lives in several copies, extract it and fix it there rather than patching each copy or adding one more (`/using-agent-skills`, behavior 6). If that extraction is large or crosses modules, take the architectural route below.
 
 ---
 

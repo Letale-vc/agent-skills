@@ -80,16 +80,25 @@ If the user explicitly asks to run in **Autopilot** (e.g., *"роби до кі�
    - You are an engineering partner, not a yes-machine. If an approach has concrete downsides or risks breaking callers, state the trade-off honestly and recommend a safer alternative (e.g., `Expand-Contract` parallel implementation).
 5. **Enforce Simplicity & Scope Discipline**:
    - Prefer the simplest solution that works. Never refactor orthogonal code, remove unfamiliar comments, or add unrequested features.
-6. **100% Working State Invariant**:
+   - Code that the current change would otherwise duplicate is **not** orthogonal: extracting or generalizing it is part of the change (see behavior 6).
+6. **Reuse Before You Write (No Near-Duplicates)**:
+   - Before designing or writing new logic, search the codebase for code that already does the same or nearly the same thing: the same domain names, the same data/offsets/fields, the same algorithm, sibling classes of the one you are touching (e.g., `Grep` for the key identifiers, read the neighbors in the same folder).
+   - Pick one outcome and state it in one line (`Reuse: …`):
+     - **Fits as-is** → call it; do not write a second version.
+     - **Near-duplicate** (same algorithm or structure, small differences) → extract or generalize it into one shared helper/base/parameter, switch the existing copy to it, and only then build the new code on top. If the copies have already diverged (different limits, guards, checks), treat the divergence as a likely bug: pick the correct behavior with evidence, or ask.
+     - **Nothing similar** → write new code where its future siblings will find it.
+   - Generalize only what has at least two real users now; never add speculative abstraction for hypothetical callers.
+   - If the extraction is large, touches a public contract, or crosses modules, it is a decision gate: propose it (separate task or `/proposal`) instead of either silently duplicating or silently refactoring.
+7. **100% Working State Invariant**:
    - Every task completed in `/implement` must leave the project compiling and passing tests.
-7. **Project Instructions Take Precedence on Project Facts**:
+8. **Project Instructions Take Precedence on Project Facts**:
    - These skills are project-agnostic. Build/test commands, coding conventions, commit rules, and documentation conventions come from the project itself (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, hooks, existing docs). Read them before acting and follow them where they are more specific than a skill.
-8. **Delegated (Subagent) Execution**:
+9. **Delegated (Subagent) Execution**:
    - When a skill runs inside a delegated subagent or another non-interactive context with no channel to the user, do **not** present menus or wait for choices. Make the `(Recommended)` choice only where it is safe and reversible, state every assumption at the top of your report, stop on blockers or architectural ambiguity instead of guessing, and return a concise report to the caller. Confirmation gates (commit, push, deleting `.temp/`) are never auto-approved in this mode.
    - **Model routing**: when delegating a task that carries a `**Model**:` tag (set by `/decompose`), pick the subagent model from that tag using the project's mapping (e.g., in Claude Code `high` → `opus`, `standard` → `sonnet`). An explicit user instruction overrides the tag; a missing tag counts as `high`.
-9. **Context Hygiene (Token Budget)**:
-   - Every turn re-reads the whole conversation, so a file read once costs tokens on every later turn. Keep `proposal.md` within its size budget (see `/proposal`) and task blocks concise.
-   - For a file longer than ~300 lines, list its headings first (e.g., grep for `^#`) and read only the sections you need (offset/limit). Never re-read a file that has not changed since you read it in this session; use what is already in context.
+10. **Context Hygiene (Token Budget)**:
+    - Every turn re-reads the whole conversation, so a file read once costs tokens on every later turn. Keep `proposal.md` within its size budget (see `/proposal`) and task blocks concise.
+    - For a file longer than ~300 lines, list its headings first (e.g., grep for `^#`) and read only the sections you need (offset/limit). Never re-read a file that has not changed since you read it in this session; use what is already in context.
 
 ---
 

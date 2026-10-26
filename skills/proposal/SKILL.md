@@ -46,7 +46,8 @@ Before finalizing `.temp/<topic>/proposal.md`:
 1. **Inspect existing codebase, dependency versions & `docs/specifications/`**:
    - Check if the proposed change modifies or conflicts with existing functions, classes, public APIs, or normative specs in `docs/specifications/`.
    - **Source-Driven Verification**: When proposing changes that depend on external frameworks or libraries, check the exact version in the project manifest (`package.json`, `.csproj`, `Cargo.toml`, `pyproject.toml`, `go.mod`) and verify against official documentation or existing project patterns instead of relying on stale training memory.
-2. **If a conflict or breaking change is possible, present an Integration Strategy choice** (or embed the confirmed choice if obvious, highlighting your recommendation):
+2. **Reuse & Generalization Scan** (`/using-agent-skills`, behavior 6): for every new component, helper, or algorithm in the design, search for existing code that already does the same or nearly the same (same domain names, data, algorithm, sibling classes). For each hit decide: **reuse as-is**, **generalize/extract first** (name the shared helper and which existing copies switch to it; flag copies that already diverged), or **new** (nothing similar found). Generalization that touches other modules or contracts is part of the design, not an afterthought — put it into the strategy below.
+3. **If a conflict or breaking change is possible, present an Integration Strategy choice** (or embed the confirmed choice if obvious, highlighting your recommendation):
    - **Strategy A — Parallel Implementation (Expand-Contract)**:
      - Create a new function/method/class alongside the existing implementation so current callers and tests never break during development.
      - Switch callers over only after the new implementation is 100% complete and tested.
@@ -74,7 +75,10 @@ Write `.temp/<topic>/proposal.md` with the following sections:
 ## 3. Impact on System Specifications (`docs/specifications/`)
 - <Which specification files will need to be created/updated via `/spec` after implementation, or "None (internal change only)">
 
-## 4. Architectural Boundaries, Contracts & Risks
+## 4. Reuse & Generalization
+- <Per new piece: reuse `path:line` / extract shared `<Name>` from `path:line` + `path:line` (note divergences) / new — nothing similar (searched: <terms>)>
+
+## 5. Architectural Boundaries, Contracts & Risks
 - <Component boundaries, signatures/interfaces, key risks, and non-goals — no low-level implementation code>
 ```
 

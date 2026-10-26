@@ -66,6 +66,10 @@ For each task (`- [ ] **Task N**`):
 1. **Read Context & Verify Stack**:
    - Use the file paths, signatures, and code examples already embedded in the task description.
    - **Source-Driven Verification**: Never write framework/library code from stale memory. Verify the exact library version in the project manifest (`package.json`, `.csproj`, `Cargo.toml`, `pyproject.toml`, `go.mod`) and match the official documentation or established codebase patterns.
+   - **Reuse Check** (`/using-agent-skills`, behavior 6): use the task's `**Reuse**:` line, and before writing any new helper, method, or class still search for existing code with the same names, data, or algorithm (the task list can miss it). If you are about to copy an existing block or write one that mirrors it:
+     - small, local, covered by tests → extract the shared piece within this task and switch the existing copy to it (behavior-preserving; existing tests must stay green);
+     - large, cross-module, or touching a public contract → do not duplicate silently: stop (in Batch too) and propose a generalize-first task, recommended answer first.
+   - State the outcome in the task report: `Reuse: <used/extracted path>` or `Reuse: none found`.
 2. **Red → Green → Verify (Strict TDD)**:
    - **Red (Write & Run Failing Test)**: Write or update the automated test(s) for the task (when applicable to the artifact type) and **run the test first to confirm it fails (or fails to compile) for the expected reason**. Never skip verifying the Red phase, as that leads to tautological tests that always pass.
    - **Green (Implement)**: Write the minimal, clean code change required to satisfy the test and task requirements.
@@ -77,6 +81,7 @@ For each task (`- [ ] **Task N**`):
    - In **Single-Task Mode**: Stop after completing 1 task and run Forward Handoff.
    - In **Batch / Autopilot Mode**: Continue to the next `- [ ]` task until all tasks in the file are resolved (`[x]` or `[-]`). Stop early only when:
      - a blocker or architectural ambiguity arises, or the same failure survives 3 fix attempts;
+     - the Reuse Check found a near-duplicate whose extraction is too large for the current task;
      - a task's verification needs a **manual check** only the user can do (running the app, a device, a game, a visual UI check) — finish everything automatable first, then give the user a short numbered checklist in their language and wait for the result;
      - the user says stop.
 

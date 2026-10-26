@@ -76,6 +76,7 @@ Ask the user only when the sources genuinely conflict (e.g., the chat contradict
 - **If `Expand-Contract` (Parallel Implementation) was chosen**:
   - *Tasks 1..K*: Build and unit-test the new method/class/module in isolation alongside the old code (zero impact on existing callers).
   - *Task K+1*: Switch callers to the new implementation and apply the chosen old-code policy (**Deprecate** or **Remove**), verifying all integration tests pass.
+- **Generalize-first tasks**: when a feature would reuse a near-duplicate of existing code, put the extraction in its **own earlier task** (behavior-preserving refactor: extract the shared helper, switch the existing copies, existing tests stay green; resolve or flag divergent copies there). Feature tasks then build on the shared helper. Likewise, when two tasks in the breakdown would write the same logic, make one of them introduce the shared piece and the other reuse it.
 
 ### Invariant 3: Self-Contained Context & Standard Checkbox States
 
@@ -92,6 +93,7 @@ Each task must contain enough concrete context that `/implement` does not need t
   - When in doubt, use `high`. The concrete model per tier comes from the project's instructions (e.g., in Claude Code `high` → `opus`, `standard` → `sonnet`).
 - **Target files**: Exact paths to create or modify.
 - **Context & Code Examples**: Existing signatures, interfaces, data structures, and short code snippets showing how the change fits in. Keep it to what `/implement` needs: reference existing code by `path:line` instead of pasting large blocks.
+- **Reuse**: Which existing code the task must call or extend instead of re-writing (`path:line`), or `none found (searched: <terms>)`. Fill it from the proposal's Reuse section or, in Fast-Track, from your own search (`/using-agent-skills`, behavior 6) — never leave `/implement` to discover it.
 - **Verification / Tests**: What unit/integration tests to write and run to prove the task is done. If part of the verification can only be done by the user (running the app, a device, a game, a visual check), add a `Manual check:` line saying exactly what to check — `/implement` pauses there in Batch mode.
 
 Example task block:
@@ -101,6 +103,7 @@ Example task block:
   - **Model**: high
   - **Target files**: `src/Reader/Components/Charges.cs`, `tests/Reader/ChargesTests.cs`
   - **Context**: `Charges` mirrors `Life` (`src/Reader/Components/Life.cs:12`); offsets live in `ChargesOffsets`.
+  - **Reuse**: read through `ComponentReader.ReadStruct` (`src/Reader/Components/ComponentReader.cs:30`), as `Life` does.
   - **Verification**: `ChargesTests.Reads_current_and_max` fails first, then passes; full test project green.
   - **Manual check**: in the app, the flask panel shows the same charges as the game.
 ```
