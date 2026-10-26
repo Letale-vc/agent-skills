@@ -1,6 +1,6 @@
 ---
 name: debug
-description: Guides systematic root-cause debugging (Reproduce -> Localize -> Root Cause Hypothesis -> Fix & Guard). Use when tests fail, builds break, or unexpected bugs occur, or via /debug.
+description: Guides systematic root-cause debugging (Reproduce -> Localize -> Root Cause Hypothesis -> Fix & Guard). Use when tests fail or are flaky, builds break, the app crashes or gives wrong output, something that used to work stopped working, or via /debug.
 ---
 
 # Debug (`/debug`)

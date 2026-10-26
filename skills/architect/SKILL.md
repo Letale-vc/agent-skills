@@ -24,7 +24,7 @@ Modes combine (an extraction question often comes up inside an assessment):
 
 - **Assess** (default for existing code): what is wrong with the current structure and what to fix first.
 - **Evolve**: the user names what comes next (a new kind of feature, a platform, a second app, plugins, more developers) → what to change now so it lands cheaply.
-- **Design**: a new project, package or large feature with no code yet → structure, boundaries and contracts before code. Read `.temp/<topic>/intent.md` / `proposal.md` if they exist.
+- **Design**: a new project, package or large feature with no code yet → structure, boundaries and contracts before code. Read `.temp/<topic>/proposal.md` if it exists.
 - **Extract**: should X be a separate module, package, library or service (Section 5).
 
 ---

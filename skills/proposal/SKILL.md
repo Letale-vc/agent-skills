@@ -1,6 +1,6 @@
 ---
 name: proposal
-description: Creates a technical Change Proposal (RFC) in .temp/<topic>/proposal.md, analyzing codebase/specification conflicts, library versions, and recommending an integration strategy (Expand-Contract vs In-Place). Use when designing architectural changes, modifying public APIs/contracts, or via /proposal.
+description: Creates a technical Change Proposal (RFC) in .temp/<topic>/proposal.md, recording the goal, success criteria and scope, analyzing codebase/specification conflicts, library versions, and recommending an integration strategy (Expand-Contract vs In-Place). Use when designing architectural changes, modifying public APIs/contracts, or via /proposal.
 ---
 
 # Proposal (`/proposal`)
@@ -29,11 +29,11 @@ description: Creates a technical Change Proposal (RFC) in .temp/<topic>/proposal
 
 ## 3. Prerequisite Advisor (Default-Proceed)
 
-Check whether `.temp/<topic>/intent.md` exists:
+Section 1 of `proposal.md` is the topic's statement of intent (goal, success criteria, scope), so find where it comes from:
 
-- **If `intent.md` exists**: Read it and proceed to Section 4.
+- **A confirmed restatement from `/interview` or a Crystallized Idea from `/idea` is in the chat** → it becomes Section 1; proceed to Section 4.
 - **If another task file's `**Design**:` line names this topic** (search `.temp/` for the topic name; typically an `/architect` roadmap step): that task and its file's `## Context & Intent` header are the intent — read them and proceed to Section 4. The structure was already decided there, so its `Constraints` are binding and the Structure Fit gate (Section 4) does not send you back to `/architect`.
-- **If `intent.md` does NOT exist**: Do not hard-block:
+- **Otherwise**, do not hard-block:
   - **Goal and scope are clear from the chat** → create `proposal.md` from the current context right away, announcing it in one line.
   - **Requirements or boundaries are still vague** → run `/interview` first (it is read-only and asks its own questions), then return here.
   - The user can override either choice; if they ask about pros/cons, answer and restate the pending choice in one line.
@@ -68,7 +68,9 @@ Write `.temp/<topic>/proposal.md` with the following sections:
 # Proposal (RFC): <Title>
 
 ## 1. What & Why (Summary of Changes)
-- <Concise description of what is changing and why>
+- <Concise description of what is changing, for whom, and why now>
+- **Success criteria**: <Concrete, verifiable outcomes that define done>
+- **Out of scope**: <What this topic explicitly does not change>
 
 ## 2. Integration & Migration Strategy
 - **Chosen Strategy**: <Expand-Contract (Parallel) OR In-Place Replacement>

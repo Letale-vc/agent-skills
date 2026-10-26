@@ -1,6 +1,6 @@
 ---
 name: interview
-description: Extracts hidden requirements, boundaries, and actual user intent through a structured one-question-at-a-time interview with explicit hypotheses. 100% read-only. Use when a request is underspecified, before creating intent/proposal, or when invoked via /interview.
+description: Extracts hidden requirements, boundaries, and actual user intent through a structured one-question-at-a-time interview with explicit hypotheses. 100% read-only. Use when a request is underspecified, before writing a proposal or tasks, or when invoked via /interview.
 ---
 
 # Interview (`/interview`)
@@ -92,6 +92,6 @@ Once the user explicitly confirms the restated intent:
 
 1. **Present the confirmed Statement of Intent cleanly in chat** (do NOT write it to any file yourself).
 2. **Proceed in the same turn to the recommended next skill**, announcing it in one line in the user's language (it only writes inside `.temp/<topic>/`, so it is safe):
-   - **Default** → `/intent` to save this Statement of Intent into `.temp/<topic>/intent.md`.
-   - **Small, self-contained change** → skip `intent.md` and go to `/proposal` (or `/decompose` for Fast-Track work that needs no RFC).
+   - **Default** → `/proposal`, which records this Statement of Intent as its Section 1 (goal, success criteria, scope).
+   - **Small, self-contained change that needs no RFC** → `/decompose` (Fast-Track), which records it in the `## Context & Intent` header of `tasks.md`.
 3. Until the user confirms, **STOP YOUR TURN** after each question; do not call file-writing tools or start downstream work.

@@ -1,6 +1,6 @@
 ---
 name: implement
-description: Executes tasks from .temp/<topic>/ using TDD (Red -> Green -> Verify), in Batch mode by default (single-task on request), updating task checkboxes ([x] completed or [-] cancelled). Use when writing code/tests for planned tasks or via /implement.
+description: Executes tasks from .temp/<topic>/ using TDD (Red -> Green -> Verify), in Batch mode by default (single-task on request), updating task checkboxes ([x] completed or [-] cancelled). Use when writing code/tests for planned tasks, when the user says to start, continue or resume the tasks, or via /implement.
 ---
 
 # Implement (`/implement`)
@@ -35,7 +35,7 @@ description: Executes tasks from .temp/<topic>/ using TDD (Red -> Green -> Verif
 3. **Inside a Git Worktree**:
    - `.temp/` is git-ignored, so a worktree does not have it. If you are inside a worktree (`git rev-parse --git-dir` differs from `git rev-parse --git-common-dir`) and `.temp/<topic>/` is missing at the worktree root, copy the topic folder from the main checkout once and work on that copy. Never write to the main checkout by absolute path.
 4. **Context Hygiene (Token Saving)**:
-   - **NEVER read full contents of resolved (`100% [x]` / `[-]`) task files into your context window.** Once a file has zero remaining `- [ ]` items, treat it as closed history so obsolete code snippets from earlier iterations do not pollute your context. Read only the **active task file** (plus `proposal.md`/`intent.md` if present, or the `## Context & Intent` header in `tasks.md`).
+   - **NEVER read full contents of resolved (`100% [x]` / `[-]`) task files into your context window.** Once a file has zero remaining `- [ ]` items, treat it as closed history so obsolete code snippets from earlier iterations do not pollute your context. Read only the **active task file** (plus `proposal.md` if present, or the `## Context & Intent` header in `tasks.md`).
    - If the active task file is longer than ~300 lines, read the `## Context & Intent` header and then only the current task block (locate `**Task N:` by search, read it by offset/limit). Read `proposal.md` by section, not in full, and never re-read a file that has not changed since you last read it.
 
 ---
@@ -99,4 +99,5 @@ For each task (`- [ ] **Task N**`):
 - **When stopping early in Batch Mode** (blocker, failure, manual check, design task): report what is done, what blocks, and the one question or checklist the user must answer. **STOP YOUR TURN**.
 - **When all tasks in the active file are resolved (`[x]` / `[-]`)**:
   - Summarize the completed tasks (one line each) and **proceed automatically to `/review`** (zero-write, safe), announcing it in one line. If the user asked to skip review, offer `/git` instead.
+  - **Fresh eyes**: when the host can spawn a subagent, run `/review` there (model tier `high`) and give it only the topic path, the active task file and the diff range — not this session's reasoning. A reviewer that shares the author's context tends to share the author's blind spots. Relay its report and present its gate yourself (`CHANGES RECOMMENDED` → the user picks findings; `APPROVED` → its next step). Without subagent support, run `/review` here.
   - If another pending task file exists in `.temp/<topic>/`, mention it as the next step after the review.

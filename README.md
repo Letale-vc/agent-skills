@@ -1,6 +1,6 @@
 # Practical Agent Skills
 
-Модульна система з **14 інженерних скілів** для AI-агентів (Antigravity, Claude Code, Cursor, Gemini CLI, Codex, OpenCode), яка повністю ізолює чернетки розробки в `.temp/<topic>/`, відокремлює нормативні специфікації в `docs/specifications/` та веде розробника за принципом **Default-Proceed**: безпечні кроки агент робить сам (з одним рядком «→ Далі: …»), а питає лише на воротах — перед комітом чи видаленням, при архітектурних рішеннях, збоях, ручних перевірках і на чекпоінтах.
+Модульна система **інженерних скілів** для AI-агентів (Antigravity, Claude Code, Cursor, Gemini CLI, Codex, OpenCode), яка повністю ізолює чернетки розробки в `.temp/<topic>/`, відокремлює нормативні специфікації в `docs/specifications/` та веде розробника за принципом **Default-Proceed**: безпечні кроки агент робить сам (з одним рядком «→ Далі: …»), а питає лише на воротах — перед комітом чи видаленням, при архітектурних рішеннях, збоях, ручних перевірках і на чекпоінтах.
 
 ---
 
@@ -9,7 +9,7 @@
 ### 1. Через універсальний `npx skills` CLI
 
 ```bash
-# Встановити всі 14 скілів локально у поточний проєкт (з GitHub або локального шляху)
+# Встановити всі скіли локально у поточний проєкт (з GitHub або локального шляху)
 npx skills add Letale-vc/agent-skills
 # або з локального клону:
 npx skills add D:\practik\agent-skills
@@ -80,28 +80,27 @@ agy plugin install https://github.com/Letale-vc/agent-skills.git
 
 ---
 
-## Усі 14 скілів системи
+## Усі скіли системи
 
-### Основний ланцюжок розробки (The 9-Stage Lifecycle Chain)
+### Основний ланцюжок розробки (The Lifecycle Chain)
 
 | # | Скіл | Режим&nbsp;доступу | Призначення |
 | :---: | :--- | :--- | :--- |
 | **0** | [`/idea`](skills/idea/SKILL.md) | `Read-Only` | Допомагає розвинути і сформулювати сиру/нечітку думку через генерацію напрямків, рекомендацій та навідних питань. Видає блок `Crystallized Idea`. |
 | **1** | [`/interview`](skills/interview/SKILL.md) | `Read-Only` | Виявляє приховані вимоги та межі (1 питання за раз із гіпотезою `GUESS`, оцінкою `CONFIDENCE` та жорстким лімітом **макс. 3–5 питань**, решта йде в `Assumptions`). |
-| **2** | [`/intent`](skills/intent/SKILL.md) | `Writer` (`.temp/<topic>/intent.md`) | Фіксує лаконічний Statement of Intent у `.temp/<topic>/intent.md`. |
-| **3** | [`/proposal`](skills/proposal/SKILL.md) | `Writer` (`.temp/<topic>/proposal.md`) | Створює технічний RFC, перевіряє версії залежностей і пропонує стратегію інтеграції: **Expand-Contract** (паралельна реалізація з deprecation/видаленням) або **In-Place**. Бюджет розміру: ціль ≤ 150 рядків, жорсткий ліміт 300, без changelog-ів. |
-| **4** | [`/decompose`](skills/decompose/SKILL.md) | `Append-Writer` (`.temp/<topic>/*tasks.md`) | Розбиває план, чат-дискусію або зауваження рев'ю на неруйнівні задачі з шапкою `Context & Intent`, вказівником `Parent:` для підзадач, тегом `Model: high/standard` (яка модель виконує задачу) рядком `Manual check:` для ручних перевірок та рядком `Design:` для кроків із ще не узгодженим дизайном (напр., з `/architect`). **Ніколи не перезаписує старі файли задач**. |
-| **5** | [`/implement`](skills/implement/SKILL.md) | `Writer` (`src/`, тести, `[x]`/`[-]`) | Виконує задачі за TDD (`Red → Green → Verify`) там, де тест справді щось ловить (нова логіка, баг-фікс; доповнює наявний тест замість нового), **у Batch-режимі за замовчуванням** (Single-Task — на прохання), зупиняється лише на блокерах, ручних перевірках і задачах із `Design:`, обирає модель субагента за тегом `Model`, ігнорує закриті `100% [x]/[-]` файли та відмічає прогрес `[ ]` → `[x]` або скасування `[-]`. |
-| **6** | [`/review`](skills/review/SKILL.md) | `Zero-Write Auditor` | Не модифікує жодних вихідних чи відстежуваних файлів, але **запускає read-only перевірки** (`git diff`, тести в `--ci`, тайпчекер, лінтер). При зауваженнях рекомендує `/decompose`, при успіху — `/spec` або `/cleanup`. |
-| **7** | [`/spec`](skills/spec/SKILL.md) | `Writer` (`docs/specifications/`) | Створює або оновлює декларативні нормативні специфікації системи у `docs/specifications/` (як система працює зараз, без історії міграцій). |
-| **8** | [`/cleanup`](skills/cleanup/SKILL.md) | `Cleaner` (`.temp/`) | Показує стан тем у `.temp/` і запитує підтвердження (через структурований інструмент запитань хоста або текстовий fallback), які завершені папки видалити, а які залишити. |
+| **2** | [`/proposal`](skills/proposal/SKILL.md) | `Writer` (`.temp/<topic>/proposal.md`) | Створює технічний RFC: фіксує мету, критерії успіху й межі теми, перевіряє версії залежностей і пропонує стратегію інтеграції: **Expand-Contract** (паралельна реалізація з deprecation/видаленням) або **In-Place**. Бюджет розміру: ціль ≤ 150 рядків, жорсткий ліміт 300, без changelog-ів. |
+| **3** | [`/decompose`](skills/decompose/SKILL.md) | `Append-Writer` (`.temp/<topic>/*tasks.md`) | Розбиває план, чат-дискусію або зауваження рев'ю на неруйнівні задачі з шапкою `Context & Intent`, вказівником `Parent:` для підзадач, тегом `Model: high/standard` (яка модель виконує задачу) рядком `Manual check:` для ручних перевірок та рядком `Design:` для кроків із ще не узгодженим дизайном (напр., з `/architect`). **Ніколи не перезаписує старі файли задач**. |
+| **4** | [`/implement`](skills/implement/SKILL.md) | `Writer` (`src/`, тести, `[x]`/`[-]`) | Виконує задачі за TDD (`Red → Green → Verify`) там, де тест справді щось ловить (нова логіка, баг-фікс; доповнює наявний тест замість нового), **у Batch-режимі за замовчуванням** (Single-Task — на прохання), зупиняється лише на блокерах, ручних перевірках і задачах із `Design:`, обирає модель субагента за тегом `Model`, ігнорує закриті `100% [x]/[-]` файли та відмічає прогрес `[ ]` → `[x]` або скасування `[-]`. |
+| **5** | [`/review`](skills/review/SKILL.md) | `Zero-Write Auditor` | Не модифікує жодних вихідних чи відстежуваних файлів, але **запускає read-only перевірки** (`git diff`, тести в `--ci`, тайпчекер, лінтер). При зауваженнях рекомендує `/decompose`, при успіху — `/spec` або `/cleanup`. |
+| **6** | [`/spec`](skills/spec/SKILL.md) | `Writer` (`docs/specifications/`) | Створює або оновлює декларативні нормативні специфікації системи у `docs/specifications/` (як система працює зараз, без історії міграцій). |
+| **7** | [`/cleanup`](skills/cleanup/SKILL.md) | `Cleaner` (`.temp/`) | Показує стан тем у `.temp/` і запитує підтвердження (через структурований інструмент запитань хоста або текстовий fallback), які завершені папки видалити, а які залишити. |
 
 ### Fast-Track маршрути та режим Autopilot (без зайвої бюрократії)
 
-Не кожна задача потребує проходження всіх 9 етапів або ручного підтвердження на кожному кроці:
+Не кожна задача потребує проходження всіх етапів або ручного підтвердження на кожному кроці:
 
 * **Micro-fix / Bugfix**: одразу `/debug` або `/implement`.
-* **Small / Medium Feature (Fast-Track)**: одразу `/decompose` (створює `.temp/<topic>/tasks.md` із вбудованою шапкою `## Context & Intent`, минаючи `intent.md` та `proposal.md`) → `/implement` → `/review`.
+* **Small / Medium Feature (Fast-Track)**: одразу `/decompose` (створює `.temp/<topic>/tasks.md` із вбудованою шапкою `## Context & Intent`, минаючи `proposal.md`) → `/implement` → `/review`.
 * **Large / Architectural Feature**: `/interview` (або `/idea`) → `/proposal` → `/decompose` → `/implement` → `/review` → `/spec` → `/cleanup`.
 * **Перебудова структури / архітектурне питання**: `/architect` (карта, цільова структура, дорожня карта) → `/decompose` (обрані кроки в `.temp/arch-<area>/tasks.md`; крок із відкритим дизайном отримує власну тему з `/proposal`) → `/implement` → `/review` → `/spec` (правила залежностей стають інваріантами).
 * **Default-Proceed**: безпечні й зворотні кроки (read-only роботу, запис у `.temp/<topic>/`, `/review` після `/implement`) агент виконує без меню. Зупиняється й ставить **одне коротке питання** лише на воротах: (1) коміт, push, видалення `.temp/`; (2) рішення, які може ухвалити тільки користувач (конфлікт вимог, архітектура, нова залежність); (3) збої та вердикт `CHANGES RECOMMENDED`; (4) ручні перевірки; (5) чекпоінти — затвердження `proposal.md` і старт коду після `/decompose`.
@@ -111,7 +110,7 @@ agy plugin install https://github.com/Letale-vc/agent-skills.git
 
 | Скіл | Режим&nbsp;доступу | Призначення |
 | :--- | :--- | :--- |
-| [`/using-agent-skills`](skills/using-agent-skills/SKILL.md) | `Read-Only` | Карта вибору скілів (Fast-Track, Autopilot), режим відновлення контексту **«Де я зупинився?»** (сканування `.temp/`) + 10 базових правил (Default-Proceed, ізоляція `.temp/` і worktree, перевикористання замість дублювання, вибір моделі для субагентів, гігієна контексту тощо). |
+| [`/using-agent-skills`](skills/using-agent-skills/SKILL.md) | `Read-Only` | Карта вибору скілів (Fast-Track, Autopilot), режим відновлення контексту **«Де я зупинився?»** (сканування `.temp/`) + базові правила (Default-Proceed, ізоляція `.temp/` і worktree, перевикористання замість дублювання, вибір моделі для субагентів, гігієна контексту тощо). |
 | [`/debug`](skills/debug/SKILL.md) | **Diagnostic&nbsp;&amp;&nbsp;Fix** | Пошук першопричини багів (включно з flaky/intermittent багами) за правилом `Stop-the-Line`: `Reproduce` → `Localize` → `Root Cause Hypothesis` → фікс + тест. |
 | [`/git`](skills/git/SKILL.md) | **Git&nbsp;Operator** | Групування змін у чисті атомарні коміти з фокусом на *why*, захист від потрапляння `.temp/` у коміт та обов'язкове підтвердження перед `git commit`. |
 | [`/audit`](skills/audit/SKILL.md) | `Zero-Write Auditor` | Разовий аудит усього репо або папки без плану: баги, безпека й втрата даних, що ламається під реальним навантаженням, ризиковий код без тестів, повільні місця, дублювання та код на видалення/злиття/розділення. Нумеровані знахідки простими словами, кожна з конкретним випадком поломки; далі — `/decompose` для обраних. |
@@ -126,7 +125,6 @@ agy plugin install https://github.com/Letale-vc/agent-skills.git
 ├── .gitignore                   # Автоматично містить: .temp/
 ├── .temp/                       # Ізольований локальний scratchpad (не світиться в git status)
 │   └── <feature-topic>/
-│       ├── intent.md            # Результат фіксації наміру (/intent, опціонально)
 │       ├── proposal.md          # Опис змін і стратегія Expand-Contract vs In-Place (/proposal, опціонально)
 │       ├── tasks.md             # Первинна декомпозиція з шапкою Context & Intent (/decompose)
 │       ├── review-1-tasks.md    # Задачі за результатами рев'ю (/decompose після /review)

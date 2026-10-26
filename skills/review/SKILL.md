@@ -1,6 +1,6 @@
 ---
 name: review
-description: Zero-write auditor. Evaluates code quality, architecture adherence, and alignment with intent/proposal/tasks using static analysis plus read-only verification commands (tests, typecheck, linter, git diff) without modifying any source or tracked files. Use when auditing code, tasks, or proposals, or via /review.
+description: Zero-write auditor. Evaluates code quality, architecture adherence, and alignment with the proposal and tasks using static analysis plus read-only verification commands (tests, typecheck, linter, git diff) without modifying any source or tracked files. Use after /implement finishes, before committing, when the user asks to check or verify finished work against the plan, when auditing a proposal or task breakdown, or via /review.
 ---
 
 # Review (`/review`)
@@ -41,7 +41,7 @@ description: Zero-write auditor. Evaluates code quality, architecture adherence,
 ### Context Hygiene (Token Saving in `.temp/<topic>/`)
 
 - Do **NOT** read every historical task file in `.temp/<topic>/` blindly.
-- Read only the latest active/just-completed task file (e.g., the highest `review-<N>-tasks.md`, or `tasks.md` if no review iterations exist) plus `proposal.md` / `intent.md` (or the `## Context & Intent` header inside `tasks.md`).
+- Read only the latest active/just-completed task file (e.g., the highest `review-<N>-tasks.md`, or `tasks.md` if no review iterations exist) plus `proposal.md` (or the `## Context & Intent` header inside `tasks.md`).
 - For files longer than ~300 lines, list headings first and read only the sections relevant to the review target. Review the code through `git diff` and the changed regions rather than whole files where possible.
 - When reviewing a `proposal.md`, flag it as a **Minor** finding if it exceeds the `/proposal` size budget (hard cap 300 lines) or carries changelog / review-history sections.
 
@@ -50,7 +50,7 @@ description: Zero-write auditor. Evaluates code quality, architecture adherence,
 Inspect `git diff`, the modified files in `src/`, and the relevant artifacts in `.temp/<topic>/` and `docs/specifications/`. Evaluate:
 
 1. **Execution & Verification Facts (for Implemented Code)**: Run the relevant test suite, typechecker, or linter in read-only mode. Did everything actually compile and pass, or did `/implement` miss a broken import, type error, or failing test?
-2. **Intent & Proposal Alignment**: Did we build what was actually agreed in `intent.md` / `proposal.md` (or the `tasks.md` context header)? Was the chosen migration strategy (`Expand-Contract` / deprecation / in-place) respected?
+2. **Intent & Proposal Alignment**: Did we build what was actually agreed in `proposal.md` (its goal, success criteria and scope) or the `tasks.md` context header? Was the chosen migration strategy (`Expand-Contract` / deprecation / in-place) respected?
 3. **Non-Breaking & Edge Cases**: Are there unhandled edge cases or broken contracts? Is risky logic (a branch, parser, math, state, contract, bug fix) left without a test that would fail if it broke? Judge tests by what they catch, not by coverage. Flag the opposite as **Minor**: tests that restate constants or mirror the implementation, near-identical tests that should be one parameterized test, tests that silently pass when the environment is missing, and obsolete tests left beside their replacements.
 4. **Code Quality, Simplicity & Anti-Bloat**: Is the code readable, modular, and free of dead code? Are new abstractions earning their complexity, or can the solution be simplified into fewer, clearer lines while preserving 100% behavior?
 5. **Duplication & Missed Reuse (look beyond the diff)**: For each new function, class, path/offset table, or algorithm in the diff, search the rest of the codebase for code that already does the same or nearly the same. Flag:
@@ -95,3 +95,5 @@ Remember: **`/review` NEVER creates `review-N-tasks.md`, edits `docs/specificati
   - **Module boundaries or dependency rules changed** (an `/architect` topic, or a proposal whose Section 5 sets dependency rules) → `/spec` too, even when the change is internal: the rules only hold if they become invariants that `/audit` and `/architect` can check.
   - **Internal refactoring/bugfix with no spec impact** → `/git` to build the commit plan (it asks before committing).
   - **Reviewed an intermediate artifact** (`proposal.md` / `tasks.md`) → the next lifecycle step (`/decompose` or `/implement`), which ends at its own checkpoint.
+
+- **Delegated run** (e.g., `/implement` started you in a fresh subagent): take the topic, task file and diff range from the prompt, judge the code on its own merits rather than asking for the author's reasoning, and return only the verdict, findings and recommended next step. The caller presents the gate to the user.

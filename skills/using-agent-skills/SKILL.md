@@ -1,6 +1,6 @@
 ---
 name: using-agent-skills
-description: Meta-skill and router for the Practical Agent Skills system. Use when starting a session, deciding which skill applies to the current task, or enforcing core engineering behaviors.
+description: Meta-skill and router for the Practical Agent Skills system. Use when starting a session, deciding which skill applies to the current task, when the user asks where they left off or what to do next, or for the core engineering behaviors every skill follows.
 ---
 
 # Using Agent Skills (`/using-agent-skills`)
@@ -24,13 +24,12 @@ Incoming Task or Thought
  │
  ├── 0. Raw, vague, or unformed spark? ──────────────→ /idea      (100% Read-Only co-creator)
  ├── 1. Goal known, but boundaries/reqs unclear? ────→ /interview (100% Read-Only, max 3–5 Qs)
- ├── 2. Need to lock in Statement of Intent? ────────→ /intent    (Writes .temp/<topic>/intent.md)
- ├── 3. Designing change & migration strategy? ──────→ /proposal  (Writes .temp/<topic>/proposal.md)
- ├── 4. Breaking work into non-breaking tasks? ──────→ /decompose (Writes .temp/<topic>/*tasks.md)
- ├── 5. Writing code & tests (single or batch)? ─────→ /implement (TDD + [x] progress tracking)
- ├── 6. Auditing code, tasks, or proposal quality? ──→ /review    (Zero-Write auditor + test/lint check)
- ├── 7. Updating normative system documentation? ────→ /spec      (Writes docs/specifications/*.md)
- ├── 8. Cleaning up finished .temp/<topic>/ folders? → /cleanup   (Interactive confirmation cleaner)
+ ├── 2. Designing change & migration strategy? ──────→ /proposal  (Writes .temp/<topic>/proposal.md)
+ ├── 3. Breaking work into non-breaking tasks? ──────→ /decompose (Writes .temp/<topic>/*tasks.md)
+ ├── 4. Writing code & tests (single or batch)? ─────→ /implement (TDD + [x] progress tracking)
+ ├── 5. Auditing code, tasks, or proposal quality? ──→ /review    (Zero-Write auditor + test/lint check)
+ ├── 6. Updating normative system documentation? ────→ /spec      (Writes docs/specifications/*.md)
+ ├── 7. Cleaning up finished .temp/<topic>/ folders? → /cleanup   (Interactive confirmation cleaner)
  │
  ├── [Utility] Tests failing, build broken, or bug? ─→ /debug     (Reproduce -> Localize -> Fix)
  ├── [Utility] Health check of existing code/repo? ──→ /audit     (Zero-Write, ranked findings)
@@ -40,11 +39,11 @@ Incoming Task or Thought
 
 ### Fast-Track Routes by Task Size (Anti-Waterfall Rule)
 
-Do **NOT** force every task through all 9 stages. Recommend the shortest safe route based on scope:
+Do **NOT** force every task through every stage. Recommend the shortest safe route based on scope:
 
 - **Micro-change / Bugfix**: Jump straight to `/debug` or `/implement`.
-- **Small / Medium Feature (Fast-Track)**: Jump straight to `/decompose` (which embeds a compact `## Context & Intent` header directly at the top of `.temp/<topic>/tasks.md`, skipping separate `intent.md` and `proposal.md` files) → `/implement` → `/review`.
-- **Large / Architectural Feature (Full Lifecycle)**: `/interview` (or `/idea`) → `/proposal` (with optional `/intent`) → `/decompose` → `/implement` → `/review` → `/spec` → `/cleanup`.
+- **Small / Medium Feature (Fast-Track)**: Jump straight to `/decompose` (which embeds a compact `## Context & Intent` header directly at the top of `.temp/<topic>/tasks.md`, skipping a separate `proposal.md`) → `/implement` → `/review`.
+- **Large / Architectural Feature (Full Lifecycle)**: `/interview` (or `/idea`) → `/proposal` → `/decompose` → `/implement` → `/review` → `/spec` → `/cleanup`.
 - **Restructuring / Structure in Question**: `/architect` (map, target structure, roadmap) → `/decompose` (chosen steps into `.temp/arch-<area>/tasks.md`; a step with an open design opens its own `/proposal` topic) → `/implement` → `/review` → `/spec` (dependency rules become invariants).
 
 ### Default-Proceed (No Menus for Safe Steps)
@@ -72,7 +71,7 @@ If the user explicitly asks to run in **Autopilot** (e.g., *"роби до кі�
    - Never hard-block the user if an earlier artifact in `.temp/<topic>/` is missing; pick the recommended route instead.
    - Follow the Default-Proceed rule (Section 2): take safe & reversible `(Recommended)` steps with a one-line announcement, and ask only at gates. The user can always ask about pros/cons or override a step.
 2. **Workspace Isolation (`.temp/<topic>/` vs. `docs/specifications/`)**:
-   - All temporary scratchpads (`intent.md`, `proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`) live strictly inside `.temp/<topic>/` (which must be in `.gitignore`).
+   - All temporary scratchpads (`proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`) live strictly inside `.temp/<topic>/` (which must be in `.gitignore`).
    - `docs/specifications/` contains **only** declarative normative specifications of how the system works right now — never temporary refactoring plans.
    - **Git worktrees do not contain `.temp/`** (it is git-ignored), so the main checkout's `.temp/<topic>/` is the source of truth:
      - **Delegating into a worktree** (subagent or parallel session): put the full task text and the `## Context & Intent` header (or the relevant `proposal.md` excerpt) into the prompt. The worker never reads or writes `.temp/`; the orchestrator in the main checkout updates the checkboxes from the worker's report.
@@ -110,7 +109,7 @@ If the user explicitly asks to run in **Autopilot** (e.g., *"роби до кі�
 When invoked directly (or when the user asks *"де я зупинився?"* / *"what's the current status?"* in a new chat session):
 
 1. **Scan `.temp/` for Active Topics**:
-   - List each `<topic>` folder in `.temp/`, which artifacts exist (`intent.md`, `proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`), the count of completed `[x]`, cancelled `[-]`, and remaining `[ ]` tasks, and **the exact next `- [ ]` task in priority order**.
+   - List each `<topic>` folder in `.temp/`, which artifacts exist (`proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`), the count of completed `[x]`, cancelled `[-]`, and remaining `[ ]` tasks, and **the exact next `- [ ]` task in priority order**.
 2. **Recommend Entry Point**:
    - Name the single **`(Recommended)`** next step with a one-line reason (e.g., resume `/implement` Batch on the next unchecked task, `/proposal` in the named topic if that task has a `**Design**:` line, run `/review` if all tasks are `[x]`, or start a Fast-Track `/decompose`), plus at most one alternative.
 3. **STOP YOUR TURN IMMEDIATELY** and wait for the user's go-ahead (unless Autopilot was explicitly requested): a status question is answered, not acted on.

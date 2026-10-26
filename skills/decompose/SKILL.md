@@ -1,6 +1,6 @@
 ---
 name: decompose
-description: Breaks down a feature request, technical proposal (RFC), chat discussion, or code review findings into independent, non-breaking vertical slice tasks in .temp/<topic>/. Never overwrites existing task files. Use when planning implementation steps or via /decompose.
+description: Breaks down a feature request, technical proposal (RFC), chat discussion, /review or /audit findings, or an /architect roadmap into independent, non-breaking vertical slice tasks in .temp/<topic>/. Never overwrites existing task files. Use when planning implementation steps, when a clear feature is too big for one edit, after a proposal is approved, after the user picks findings to fix, or via /decompose.
 ---
 
 # Decompose (`/decompose`)
@@ -52,7 +52,7 @@ Ask the user only when the sources genuinely conflict (e.g., the chat contradict
 
 ### Invariant 1: Embedded Context Header (`tasks.md`) & Parent Link (`subtasks-*.md`, Design Topics)
 
-- **When creating `.temp/<topic>/tasks.md`** (especially in **Fast-Track mode** where `intent.md` and `proposal.md` were skipped), always place a compact 3–4 line header at the very top of `tasks.md`:
+- **When creating `.temp/<topic>/tasks.md`** (especially in **Fast-Track mode** where no `proposal.md` exists), always place a compact 3–4 line header at the very top of `tasks.md`:
 
   ```markdown
   ## Context & Intent
