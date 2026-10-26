@@ -1,6 +1,6 @@
 # Practical Agent Skills
 
-Модульна система з **12 інженерних скілів** для AI-агентів (Antigravity, Claude Code, Cursor, Gemini CLI, Codex, OpenCode), яка повністю ізолює чернетки розробки в `.temp/<topic>/`, відокремлює нормативні специфікації в `docs/specifications/` та веде розробника через м'які інтерактивні розвилки з рекомендаціями агента.
+Модульна система з **12 інженерних скілів** для AI-агентів (Antigravity, Claude Code, Cursor, Gemini CLI, Codex, OpenCode), яка повністю ізолює чернетки розробки в `.temp/<topic>/`, відокремлює нормативні специфікації в `docs/specifications/` та веде розробника за принципом **Default-Proceed**: безпечні кроки агент робить сам (з одним рядком «→ Далі: …»), а питає лише на воротах — перед комітом чи видаленням, при архітектурних рішеннях, збоях, ручних перевірках і на чекпоінтах.
 
 ---
 
@@ -44,6 +44,12 @@ npx skills add D:\practik\agent-skills --skill interview
 # Встановити лише обрані скіли у проєкт
 .\install.ps1 -Target "D:\practik\MyProject" -Skill idea,interview,proposal,decompose
 
+# Claude Code: ГЛОБАЛЬНО (~/.claude/skills)
+.\install.ps1 -Global -Claude
+
+# Claude Code: ЛОКАЛЬНО у репозиторій (<проєкт>/.claude/skills)
+.\install.ps1 -Target "D:\practik\MyProject" -Claude
+
 # Зв'язати .agents/skills -> skills/ через Directory Junction у цьому репозиторії
 .\install.ps1 -SyncRepo
 ```
@@ -56,7 +62,11 @@ npx skills add D:\practik\agent-skills --skill interview
 ./install.sh --target /path/to/my-project
 ./install.sh --target /path/to/my-project --skill interview --skill proposal
 ./install.sh --sync-repo
+./install.sh --global --claude                       # ~/.claude/skills
+./install.sh --target /path/to/my-project --claude   # <проєкт>/.claude/skills
 ```
+
+`-All` також оновлює `~/.claude/skills` та `.claude/skills` у сусідніх проєктах, якщо ці папки вже існують.
 
 ### 3. Як нативний плагін Antigravity (`agy`)
 
@@ -79,12 +89,12 @@ agy plugin install https://github.com/Letale-vc/agent-skills.git
 | **0** | [`/idea`](skills/idea/SKILL.md) | `Read-Only` | Допомагає розвинути і сформулювати сиру/нечітку думку через генерацію напрямків, рекомендацій та навідних питань. Видає блок `Crystallized Idea`. |
 | **1** | [`/interview`](skills/interview/SKILL.md) | `Read-Only` | Виявляє приховані вимоги та межі (1 питання за раз із гіпотезою `GUESS`, оцінкою `CONFIDENCE` та жорстким лімітом **макс. 3–5 питань**, решта йде в `Assumptions`). |
 | **2** | [`/intent`](skills/intent/SKILL.md) | `Writer` (`.temp/<topic>/intent.md`) | Фіксує лаконічний Statement of Intent у `.temp/<topic>/intent.md`. |
-| **3** | [`/proposal`](skills/proposal/SKILL.md) | `Writer` (`.temp/<topic>/proposal.md`) | Створює технічний RFC, перевіряє версії залежностей і пропонує стратегію інтеграції: **Expand-Contract** (паралельна реалізація з deprecation/видаленням) або **In-Place**. |
-| **4** | [`/decompose`](skills/decompose/SKILL.md) | `Append-Writer` (`.temp/<topic>/*tasks.md`) | Розбиває план, чат-дискусію або зауваження рев'ю на неруйнівні задачі з шапкою `Context & Intent`, вказівником `Parent:` для підзадач та прикладами коду. **Ніколи не перезаписує старі файли задач**. |
-| **5** | [`/implement`](skills/implement/SKILL.md) | `Writer` (`src/`, тести, `[x]`/`[-]`) | Виконує задачі за суворим TDD (`Red → Green → Verify`), ігноруючи закриті `100% [x]/[-]` файли для економії контексту, та відмічає прогрес `[ ]` → `[x]` або скасування `[-]`. |
+| **3** | [`/proposal`](skills/proposal/SKILL.md) | `Writer` (`.temp/<topic>/proposal.md`) | Створює технічний RFC, перевіряє версії залежностей і пропонує стратегію інтеграції: **Expand-Contract** (паралельна реалізація з deprecation/видаленням) або **In-Place**. Бюджет розміру: ціль ≤ 150 рядків, жорсткий ліміт 300, без changelog-ів. |
+| **4** | [`/decompose`](skills/decompose/SKILL.md) | `Append-Writer` (`.temp/<topic>/*tasks.md`) | Розбиває план, чат-дискусію або зауваження рев'ю на неруйнівні задачі з шапкою `Context & Intent`, вказівником `Parent:` для підзадач, тегом `Model: high/standard` (яка модель виконує задачу) та рядком `Manual check:` для ручних перевірок. **Ніколи не перезаписує старі файли задач**. |
+| **5** | [`/implement`](skills/implement/SKILL.md) | `Writer` (`src/`, тести, `[x]`/`[-]`) | Виконує задачі за суворим TDD (`Red → Green → Verify`) **у Batch-режимі за замовчуванням** (Single-Task — на прохання), зупиняється лише на блокерах і ручних перевірках, обирає модель субагента за тегом `Model`, ігнорує закриті `100% [x]/[-]` файли та відмічає прогрес `[ ]` → `[x]` або скасування `[-]`. |
 | **6** | [`/review`](skills/review/SKILL.md) | `Zero-Write Auditor` | Не модифікує жодних вихідних чи відстежуваних файлів, але **запускає read-only перевірки** (`git diff`, тести в `--ci`, тайпчекер, лінтер). При зауваженнях рекомендує `/decompose`, при успіху — `/spec` або `/cleanup`. |
 | **7** | [`/spec`](skills/spec/SKILL.md) | `Writer` (`docs/specifications/`) | Створює або оновлює декларативні нормативні специфікації системи у `docs/specifications/` (як система працює зараз, без історії міграцій). |
-| **8** | [`/cleanup`](skills/cleanup/SKILL.md) | `Cleaner` (`.temp/`) | Показує стан тем у `.temp/` і запитує підтвердження (через `ask_question` або текстовий fallback), які завершені папки видалити, а які залишити. |
+| **8** | [`/cleanup`](skills/cleanup/SKILL.md) | `Cleaner` (`.temp/`) | Показує стан тем у `.temp/` і запитує підтвердження (через структурований інструмент запитань хоста або текстовий fallback), які завершені папки видалити, а які залишити. |
 
 ### Fast-Track маршрути та режим Autopilot (без зайвої бюрократії)
 
@@ -93,13 +103,14 @@ agy plugin install https://github.com/Letale-vc/agent-skills.git
 * **Micro-fix / Bugfix**: одразу `/debug` або `/implement`.
 * **Small / Medium Feature (Fast-Track)**: одразу `/decompose` (створює `.temp/<topic>/tasks.md` із вбудованою шапкою `## Context & Intent`, минаючи `intent.md` та `proposal.md`) → `/implement` → `/review`.
 * **Large / Architectural Feature**: `/interview` (або `/idea`) → `/proposal` → `/decompose` → `/implement` → `/review` → `/spec` → `/cleanup`.
-* **Autopilot Mode**: якщо попросити агента *«роби до кінця»* (*autopilot*), скіли автоматично переходять за рекомендованим маршрутом без проміжних зупинок і стають на паузу лише при зауваженнях `/review` (`CHANGES RECOMMENDED`), блокерах або перед `git commit` / видаленням `.temp/`.
+* **Default-Proceed**: безпечні й зворотні кроки (read-only роботу, запис у `.temp/<topic>/`, `/review` після `/implement`) агент виконує без меню. Зупиняється й ставить **одне коротке питання** лише на воротах: (1) коміт, push, видалення `.temp/`; (2) рішення, які може ухвалити тільки користувач (конфлікт вимог, архітектура, нова залежність); (3) збої та вердикт `CHANGES RECOMMENDED`; (4) ручні перевірки; (5) чекпоінти — затвердження `proposal.md` і старт коду після `/decompose`.
+* **Autopilot Mode**: якщо попросити агента *«роби до кінця»* (*autopilot*), скіли проходять також чекпоінти (5) і зупиняються лише на воротах 1–4.
 
 ### Мета-роутер та утиліти (Meta & Utility Skills)
 
 | Скіл | Режим&nbsp;доступу | Призначення |
 | :--- | :--- | :--- |
-| [`/using-agent-skills`](skills/using-agent-skills/SKILL.md) | `Read-Only` | Карта вибору скілів (Fast-Track, Autopilot), режим відновлення контексту **«Де я зупинився?»** (сканування `.temp/`) + 6 базових правил інженерної дисципліни. |
+| [`/using-agent-skills`](skills/using-agent-skills/SKILL.md) | `Read-Only` | Карта вибору скілів (Fast-Track, Autopilot), режим відновлення контексту **«Де я зупинився?»** (сканування `.temp/`) + 9 базових правил (Default-Proceed, ізоляція `.temp/` і worktree, вибір моделі для субагентів, гігієна контексту тощо). |
 | [`/debug`](skills/debug/SKILL.md) | **Diagnostic&nbsp;&amp;&nbsp;Fix** | Пошук першопричини багів (включно з flaky/intermittent багами) за правилом `Stop-the-Line`: `Reproduce` → `Localize` → `Root Cause Hypothesis` → фікс + тест. |
 | [`/git`](skills/git/SKILL.md) | **Git&nbsp;Operator** | Групування змін у чисті атомарні коміти з фокусом на *why*, захист від потрапляння `.temp/` у коміт та обов'язкове підтвердження перед `git commit`. |
 
@@ -121,6 +132,8 @@ agy plugin install https://github.com/Letale-vc/agent-skills.git
 │   └── specifications/          # СПРАВЖНІ нормативні специфікації системи (/spec)
 └── src/                         # Вихідний код та тести (/implement)
 ```
+
+**Git worktree**: `.temp/` ігнорується git'ом, тому у worktree його немає. Джерело правди — `.temp/<topic>/` основного checkout'у. Субагенти у worktree отримують текст задачі в промпті й не торкаються `.temp/`. Сесія, що сама працює у worktree, один раз копіює папку теми в `.temp/` worktree і пише лише туди — ніколи в основний checkout за абсолютним шляхом.
 
 ---
 

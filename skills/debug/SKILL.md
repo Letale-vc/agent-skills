@@ -24,6 +24,7 @@ description: Guides systematic root-cause debugging (Reproduce -> Localize -> Ro
 Work through Steps 1–3 before proposing or writing any fix:
 
 ### Step 1: Reproduce (Deterministic or Flaky/Intermittent)
+
 - Make the failure happen reliably (run the specific failing test, build command, or trace the exact input/state that triggers the bug).
 - Preserve the exact error message, stack trace, or failing assertion.
 - **If the bug does NOT reproduce deterministically (Flaky / Intermittent / Heisenbug)**:
@@ -32,10 +33,12 @@ Work through Steps 1–3 before proposing or writing any fix:
   - Try running the test in stress/repeat mode or isolation; if it still cannot be triggered reliably, formulate your best hypothesis in Step 3 with `<80%` confidence and recommend **Option 3 (Targeted Diagnostic Instrumentation)** to capture runtime state on the next occurrence.
 
 ### Step 2: Localize
+
 - Narrow down the exact layer, module, file, and line range where actual behavior diverges from expected behavior.
 - Check recent changes (`git diff` / `git log -n 5`) if this is a regression ("worked yesterday, broke today").
 
 ### Step 3: Formulate Root Cause Hypothesis
+
 Present your diagnosis clearly in chat before touching production code:
 
 ```markdown
@@ -48,27 +51,24 @@ Present your diagnosis clearly in chat before touching production code:
 
 ---
 
-## 3. Interactive Resolution Advisor (CRITICAL)
+## 3. Resolution Route (Default-Proceed)
 
-Once the root cause is identified, present the resolution options with your recommendation:
+Once the root cause is identified, pick the route from the diagnosis and announce it in one line (the user can override):
 
-- **Option 1 (Recommended for localized, well-understood bugs)**:
-  - Fix the root cause directly right now and add/update a **regression test** that fails without the fix and passes with it.
-- **Option 2 (Recommended if the bug exposes a deeper architectural flaw or breaking API issue)**:
-  - Hand off to `/proposal` or `/decompose` to plan a safe multi-step fix (e.g., in `.temp/<topic>/`) instead of patching a symptom.
-- **Option 3**: Add targeted diagnostic instrumentation/logging first (if confidence in the root cause is `<80%` and more runtime evidence is needed).
+- **Localized, well-understood bug (confidence `≥80%`)** → fix the root cause right now and add/update a **regression test** that fails without the fix and passes with it.
+- **Confidence `<80%`, more runtime evidence needed** → add targeted diagnostic instrumentation/logging first. If reproducing needs the user (running the app, a device, a game), give them a short numbered checklist in their language and **STOP YOUR TURN**.
+- **The bug exposes a deeper architectural flaw or a breaking API issue** → this is a decision gate: recommend `/proposal` or `/decompose` for a safe multi-step fix (e.g., in `.temp/<topic>/`) instead of patching a symptom, ask one short question, and **STOP YOUR TURN**.
 
-*Note*: The user can ask about pros/cons or details of the diagnosis. Answer and re-present the options until they choose.
+If the user asks about pros/cons or details of the diagnosis, answer and restate the pending route in one line.
 
 ---
 
 ## 4. Fix Verification & Forward Handoff
 
-If the user chooses **Option 1 (Direct Fix + Regression Test)**:
-1. Write/update the regression test → apply the minimal fix → run the test suite to verify 100% green status.
-2. Offer the next-step options with your recommendation:
-   - **Option 1 (Recommended)**: Run `/review` to verify the fix is clean and introduces no side effects.
-   - **Option 2**: Run `/git` to create a clean `fix:` commit.
-   - **Option 3**: Return to `/implement` if this bug occurred mid-task in `.temp/<topic>/`.
-3. **STOP YOUR TURN IMMEDIATELY.**
+When fixing directly:
 
+1. Write/update the regression test → apply the minimal fix → run the test suite to verify 100% green status.
+2. Next step, announced in one line:
+   - **The bug occurred mid-task in `.temp/<topic>/`** → return to `/implement` and continue the active task file.
+   - **The fix touches more than one module or a public contract** → proceed to `/review` (zero-write, safe).
+   - **Otherwise** → recommend `/git` for a clean `fix:` commit and **STOP YOUR TURN** (committing needs confirmation).

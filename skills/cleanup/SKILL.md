@@ -1,6 +1,6 @@
 ---
 name: cleanup
-description: Safely inspects and cleans up completed temporary feature folders in .temp/ after explicit user confirmation (via interactive ask_question tool or numbered text prompt). Use when finishing a feature topic or via /cleanup.
+description: Safely inspects and cleans up completed temporary feature folders in .temp/ after explicit user confirmation (via the host's interactive question tool or a numbered text prompt). Use when finishing a feature topic or via /cleanup.
 ---
 
 # Cleanup (`/cleanup`)
@@ -10,7 +10,7 @@ description: Safely inspects and cleans up completed temporary feature folders i
 - **MODE**: **Temp Cleaner**.
 - **ALLOWED ACTIONS**:
   - Inspecting `.temp/` directories and their files.
-  - Deleting specific `.temp/<topic>/` directories (or `.temp/` itself if empty) **ONLY after explicit user confirmation** (via the `ask_question` tool if supported by the host environment, or via explicit numbered text confirmation in chat if `ask_question` is unavailable).
+  - Deleting specific `.temp/<topic>/` directories (or `.temp/` itself if empty) **ONLY after explicit user confirmation** (via the host's structured question tool if available, or via explicit numbered text confirmation in chat otherwise).
 - **FORBIDDEN ACTIONS (STRICT)**:
   - **NEVER delete any file or folder without first asking the user and receiving explicit confirmation**.
   - **NEVER delete or modify anything outside `.temp/`** (`src/`, `docs/`, root files).
@@ -21,7 +21,8 @@ description: Safely inspects and cleans up completed temporary feature folders i
 ## 2. Cleanup Process
 
 ### Step 1: Scan & Summarize `.temp/`
-1. Check if `.temp/` exists and list all `<topic>` subdirectories inside it.
+
+1. Check if `.temp/` exists and list all `<topic>` subdirectories inside it. Inside a git worktree (`git rev-parse --git-dir` differs from `git rev-parse --git-common-dir`), this is the worktree's own copy of `.temp/`: clean only that copy, never the main checkout's `.temp/` by absolute path, and mention whether the main checkout still holds the topic.
 2. If `.temp/` does not exist or is already empty, inform the user that the workspace is already clean and stop your turn.
 3. For each `<topic>` folder in `.temp/`, inspect its files (`intent.md`, `proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`) and output a brief status summary in chat:
    - Topic name: `.temp/<topic>/`
@@ -29,7 +30,9 @@ description: Safely inspects and cleans up completed temporary feature folders i
    - Task status: e.g., `All tasks resolved ([x] / [-])` or `Has N unfinished tasks ([ ])` (note: tasks marked `- [-]` are cancelled and count as resolved, not unfinished).
 
 ### Step 2: Ask the User for Confirmation (Tool-Agnostic with Fallback)
-Use the `ask_question` tool if available in your environment; **if `ask_question` is not available (e.g., Cursor, Codex, CLI), present the numbered options in plain chat text and wait for the user's explicit reply**:
+
+Use the host's structured question tool if one is available (e.g., `AskUserQuestion` in Claude Code, `ask_question` in Antigravity); **if none is available, present the numbered options in plain chat text and wait for the user's explicit reply**:
+
 - If there is **1 completed topic** (`.temp/<topic>/`):
   - Option 1: `(Recommended)` Delete `.temp/<topic>/` (work is complete).
   - Option 2: Keep `.temp/<topic>/` for local history (do not delete).
@@ -40,7 +43,7 @@ Use the `ask_question` tool if available in your environment; **if `ask_question
 - *Warning Guard*: If a topic still has unchecked tasks (`- [ ]`), warn the user in the summary and recommend keeping it (or finishing `/implement` first) unless they explicitly want to discard it.
 
 ### Step 3: Execute Choice & Report
+
 - If the user selected a delete option, remove only the confirmed `.temp/<topic>/` directory and verify `git status` remains clean.
 - If the user selected to keep `.temp/<topic>/`, confirm that no files were deleted.
 - **STOP YOUR TURN IMMEDIATELY.**
-

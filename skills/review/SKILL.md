@@ -18,7 +18,7 @@ description: Zero-write auditor. Evaluates code quality, architecture adherence,
 - **FORBIDDEN ACTIONS (STRICT)**:
   - **NEVER create, edit, format, or delete ANY source file, test snapshot, `docs/` file, or `.temp/` file** (do NOT create `review-1-tasks.md` yourself!).
   - NEVER run commands that mutate source files, update snapshots, or install packages (`--fix`, `-u`, `git checkout`, `npm install`, etc.).
-  - NEVER automatically trigger `/decompose`, `/implement`, `/spec`, or `/cleanup` (unless running in user-requested Autopilot mode and the verdict is `APPROVED`).
+  - NEVER trigger `/decompose` or `/implement` after a `CHANGES RECOMMENDED` verdict without the user's go-ahead (not even in Autopilot) — the user decides which findings to fix.
 - **LANGUAGE RULE**: Always communicate with the user in the user's conversation language.
 
 ---
@@ -39,18 +39,25 @@ description: Zero-write auditor. Evaluates code quality, architecture adherence,
 ## 3. Context Hygiene, Audit Checklist & Report Format
 
 ### Context Hygiene (Token Saving in `.temp/<topic>/`)
+
 - Do **NOT** read every historical task file in `.temp/<topic>/` blindly.
 - Read only the latest active/just-completed task file (e.g., the highest `review-<N>-tasks.md`, or `tasks.md` if no review iterations exist) plus `proposal.md` / `intent.md` (or the `## Context & Intent` header inside `tasks.md`).
+- For files longer than ~300 lines, list headings first and read only the sections relevant to the review target. Review the code through `git diff` and the changed regions rather than whole files where possible.
+- When reviewing a `proposal.md`, flag it as a **Minor** finding if it exceeds the `/proposal` size budget (hard cap 300 lines) or carries changelog / review-history sections.
 
 ### Audit Checklist
+
 Inspect `git diff`, the modified files in `src/`, and the relevant artifacts in `.temp/<topic>/` and `docs/specifications/`. Evaluate:
+
 1. **Execution & Verification Facts (for Implemented Code)**: Run the relevant test suite, typechecker, or linter in read-only mode. Did everything actually compile and pass, or did `/implement` miss a broken import, type error, or failing test?
 2. **Intent & Proposal Alignment**: Did we build what was actually agreed in `intent.md` / `proposal.md` (or the `tasks.md` context header)? Was the chosen migration strategy (`Expand-Contract` / deprecation / in-place) respected?
 3. **Non-Breaking & Edge Cases**: Are there unhandled edge cases, broken contracts, or missing test coverage?
 4. **Code Quality, Simplicity & Anti-Bloat**: Is the code readable, modular, and free of dead code? Are new abstractions earning their complexity, or can the solution be simplified into fewer, clearer lines while preserving 100% behavior?
-5. **Workspace Hygiene**: Ensure no temporary files (`SPEC.md`, `tasks/`, etc.) leaked outside `.temp/<topic>/`.
+5. **Project Rules & Specifications**: Does the change follow the project's own agent/contributor instructions (e.g., `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`: layering, naming, warnings policy, performance budgets) and keep the invariants of the affected specs in `docs/specifications/`? If a spec's behavior changed, flag that `/spec` is needed.
+6. **Workspace Hygiene**: Ensure no temporary planning files (stray `SPEC.md`, `todo.md`, `tasks/`, etc.) leaked outside `.temp/<topic>/`.
 
 ### Output Format in Chat
+
 Present a structured, concise report directly in the chat:
 
 ```markdown
@@ -72,15 +79,12 @@ Verification: `<Tests / Typecheck / Linter status, or "Static artifact audit">`
 
 Remember: **`/review` NEVER creates `review-N-tasks.md`, edits `docs/specifications/`, or deletes `.temp/` itself.** It only recommends the appropriate downstream skill:
 
-- **Case A — Issues Were Found (`CHANGES RECOMMENDED`)**:
-  - **Option 1 (Recommended)**: Invoke `/decompose` to convert the agreed review findings into a new immutable task file `.temp/<topic>/review-<N>-tasks.md`.
-  - **Option 2**: Invoke `/implement` directly if the user prefers to apply a trivial one-line fix immediately.
-  - **Option 3**: Discuss, challenge, or refine specific review findings right here in chat (if the user asks pros/cons or disagrees with a finding, discuss it and re-present the options).
+- **Case A — Issues Were Found (`CHANGES RECOMMENDED`)** — a gate: the user decides which findings to fix. Ask one short question in the user's language, recommended answer first:
+  - *"Створюю `review-<N>-tasks.md` через `/decompose` з усіх Critical/Major знахідок (Minor — теж?)"* — alternatives: name the finding numbers to include, apply a trivial one-line fix directly via `/implement`, or discuss a finding.
+  - If the user disagrees with a finding or asks pros/cons, discuss it and restate the pending decision in one line.
+  - **STOP YOUR TURN IMMEDIATELY.** Do not call any write or command tools.
 
-- **Case B — Zero Issues / Clean Pass (`APPROVED`)**:
-  - **Option 1 (Recommended if public behavior, contracts, or APIs changed)**: Invoke `/spec` to create or update the normative system specification in `docs/specifications/`.
-  - **Option 2 (Recommended if this was an internal refactoring/bugfix with no spec impact)**: Invoke `/cleanup` to decide whether to delete or keep `.temp/<topic>/`.
-  - **Option 3**: If reviewing an intermediate task or `proposal.md`/`tasks.md`, proceed to the next step (`/implement` or `/decompose`).
-
-**STOP YOUR TURN IMMEDIATELY.** Do not call any write or command tools.
-
+- **Case B — Zero Issues / Clean Pass (`APPROVED`)** — proceed in the same turn, announcing the step in one line:
+  - **Public behavior, contracts, or APIs changed** → `/spec` to create or update the normative specification in `docs/specifications/`.
+  - **Internal refactoring/bugfix with no spec impact** → `/git` to build the commit plan (it asks before committing).
+  - **Reviewed an intermediate artifact** (`proposal.md` / `tasks.md`) → the next lifecycle step (`/decompose` or `/implement`), which ends at its own checkpoint.
