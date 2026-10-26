@@ -32,6 +32,7 @@ description: Creates a technical Change Proposal (RFC) in .temp/<topic>/proposal
 Check whether `.temp/<topic>/intent.md` exists:
 
 - **If `intent.md` exists**: Read it and proceed to Section 4.
+- **If another task file's `**Design**:` line names this topic** (search `.temp/` for the topic name; typically an `/architect` roadmap step): that task and its file's `## Context & Intent` header are the intent — read them and proceed to Section 4. The structure was already decided there, so its `Constraints` are binding and the Structure Fit gate (Section 4) does not send you back to `/architect`.
 - **If `intent.md` does NOT exist**: Do not hard-block:
   - **Goal and scope are clear from the chat** → create `proposal.md` from the current context right away, announcing it in one line.
   - **Requirements or boundaries are still vague** → run `/interview` first (it is read-only and asks its own questions), then return here.
@@ -47,7 +48,8 @@ Before finalizing `.temp/<topic>/proposal.md`:
    - Check if the proposed change modifies or conflicts with existing functions, classes, public APIs, or normative specs in `docs/specifications/`.
    - **Source-Driven Verification**: When proposing changes that depend on external frameworks or libraries, check the exact version in the project manifest (`package.json`, `.csproj`, `Cargo.toml`, `pyproject.toml`, `go.mod`) and verify against official documentation or existing project patterns instead of relying on stale training memory.
 2. **Reuse & Generalization Scan** (`/using-agent-skills`, behavior 6): for every new component, helper, or algorithm in the design, search for existing code that already does the same or nearly the same (same domain names, data, algorithm, sibling classes). For each hit decide: **reuse as-is**, **generalize/extract first** (name the shared helper and which existing copies switch to it; flag copies that already diverged), or **new** (nothing similar found). Generalization that touches other modules or contracts is part of the design, not an afterthought — put it into the strategy below.
-3. **If a conflict or breaking change is possible, present an Integration Strategy choice** (or embed the confirmed choice if obvious, highlighting your recommendation):
+3. **Structure Fit**: check the design against the current module boundaries and dependency direction, plus any dependency rules in `docs/specifications/` or in an `/architect` report in this chat (those rules are constraints, not suggestions). If the change needs a new module or package, an extraction, or a dependency arrow pointing the wrong way, the structure itself is in question and a single RFC would lock in a local answer to it: this is a decision gate — recommend `/architect` (Evolve mode, with this change as the scenario) first, or continue within the current structure if the user prefers.
+4. **If a conflict or breaking change is possible, present an Integration Strategy choice** (or embed the confirmed choice if obvious, highlighting your recommendation):
    - **Strategy A — Parallel Implementation (Expand-Contract)**:
      - Create a new function/method/class alongside the existing implementation so current callers and tests never break during development.
      - Switch callers over only after the new implementation is 100% complete and tested.
@@ -79,7 +81,7 @@ Write `.temp/<topic>/proposal.md` with the following sections:
 - <Per new piece: reuse `path:line` / extract shared `<Name>` from `path:line` + `path:line` (note divergences) / new — nothing similar (searched: <terms>)>
 
 ## 5. Architectural Boundaries, Contracts & Risks
-- <Component boundaries, signatures/interfaces, key risks, and non-goals — no low-level implementation code>
+- <Component boundaries, signatures/interfaces, the dependency rules this change must keep, key risks, and non-goals — no low-level implementation code>
 ```
 
 ### Size Budget (Token Hygiene)

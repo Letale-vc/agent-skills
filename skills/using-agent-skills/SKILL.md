@@ -34,6 +34,7 @@ Incoming Task or Thought
  │
  ├── [Utility] Tests failing, build broken, or bug? ─→ /debug     (Reproduce -> Localize -> Fix)
  ├── [Utility] Health check of existing code/repo? ──→ /audit     (Zero-Write, ranked findings)
+ ├── [Utility] Architecture, layout, extraction? ────→ /architect (Zero-Write, map + roadmap)
  └── [Utility] Ready to commit or clean git status? ─→ /git       (Atomic commits & .temp/ guard)
 ```
 
@@ -44,6 +45,7 @@ Do **NOT** force every task through all 9 stages. Recommend the shortest safe ro
 - **Micro-change / Bugfix**: Jump straight to `/debug` or `/implement`.
 - **Small / Medium Feature (Fast-Track)**: Jump straight to `/decompose` (which embeds a compact `## Context & Intent` header directly at the top of `.temp/<topic>/tasks.md`, skipping separate `intent.md` and `proposal.md` files) → `/implement` → `/review`.
 - **Large / Architectural Feature (Full Lifecycle)**: `/interview` (or `/idea`) → `/proposal` (with optional `/intent`) → `/decompose` → `/implement` → `/review` → `/spec` → `/cleanup`.
+- **Restructuring / Structure in Question**: `/architect` (map, target structure, roadmap) → `/decompose` (chosen steps into `.temp/arch-<area>/tasks.md`; a step with an open design opens its own `/proposal` topic) → `/implement` → `/review` → `/spec` (dependency rules become invariants).
 
 ### Default-Proceed (No Menus for Safe Steps)
 
@@ -110,5 +112,5 @@ When invoked directly (or when the user asks *"де я зупинився?"* / *
 1. **Scan `.temp/` for Active Topics**:
    - List each `<topic>` folder in `.temp/`, which artifacts exist (`intent.md`, `proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`), the count of completed `[x]`, cancelled `[-]`, and remaining `[ ]` tasks, and **the exact next `- [ ]` task in priority order**.
 2. **Recommend Entry Point**:
-   - Name the single **`(Recommended)`** next step with a one-line reason (e.g., resume `/implement` Batch on the next unchecked task, run `/review` if all tasks are `[x]`, or start a Fast-Track `/decompose`), plus at most one alternative.
+   - Name the single **`(Recommended)`** next step with a one-line reason (e.g., resume `/implement` Batch on the next unchecked task, `/proposal` in the named topic if that task has a `**Design**:` line, run `/review` if all tasks are `[x]`, or start a Fast-Track `/decompose`), plus at most one alternative.
 3. **STOP YOUR TURN IMMEDIATELY** and wait for the user's go-ahead (unless Autopilot was explicitly requested): a status question is answered, not acted on.

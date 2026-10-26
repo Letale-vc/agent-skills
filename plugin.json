@@ -2,7 +2,7 @@
   "name": "practical-agent-skills",
   "displayName": "Practical Agent Skills",
   "version": "1.0.0",
-  "description": "Modular 13-skill engineering workflow (idea, interview, intent, proposal, decompose, implement, review, spec, cleanup, debug, git, audit, using-agent-skills) with strict .temp/ isolation and interactive prerequisite advisors.",
+  "description": "Modular 14-skill engineering workflow (idea, interview, intent, proposal, decompose, implement, review, spec, cleanup, debug, git, audit, architect, using-agent-skills) with strict .temp/ isolation and interactive prerequisite advisors.",
   "suggestedPrompts": [
     "/idea Help me shape a raw idea into a clear concept",
     "/interview Stress-test my feature requirements one question at a time",

@@ -80,11 +80,12 @@ For each task (`- [ ] **Task N**`):
    - **Verify (100% Working State Invariant)**: Run the build/test suite to confirm the new test passes and zero existing tests regressed.
 3. **Update Progress Checkbox (Tool-Agnostic)**:
    - Use your file-editing tool on the active task file in `.temp/<topic>/` to change `- [ ] **Task N:` to `- [x] **Task N:` (or `- [-] ~~**Task N: <Title>**~~ (cancelled: <reason>)` if the task was superseded/cancelled) without altering the rest of the task text.
-   - **Subtask Parent Sync**: When the last remaining `- [ ]` item in a `subtasks-*.md` file is resolved (`[x]` or `[-]`), inspect the `Parent: <parent-file>#Task <M>` header at the top of `subtasks-*.md` (defaulting to `tasks.md` if omitted) and mark the corresponding parent `Task M` as `- [x]` in that exact parent file.
+   - **Subtask Parent Sync**: When the last remaining `- [ ]` item in a `subtasks-*.md` file is resolved (`[x]` or `[-]`), inspect the `Parent: <parent-file>#Task <M>` header at the top of `subtasks-*.md` (defaulting to `tasks.md` if omitted) and mark the corresponding parent `Task M` as `- [x]` in that exact parent file. The same applies to a topic's `tasks.md` that carries a `Parent:` line (a topic opened for a `**Design**:` task): its path, e.g. `../arch-<area>/tasks.md`, points into the other topic.
 4. **Mode Control**:
    - In **Single-Task Mode**: Stop after completing 1 task and run Forward Handoff.
    - In **Batch / Autopilot Mode**: Continue to the next `- [ ]` task until all tasks in the file are resolved (`[x]` or `[-]`). Stop early only when:
      - a blocker or architectural ambiguity arises, or the same failure survives 3 fix attempts;
+     - the next task has a `**Design**:` line — its design is not settled yet, so recommend `/proposal` in the topic that line names (or continuing that topic if it already exists) instead of inventing one;
      - the Reuse Check found a near-duplicate whose extraction is too large for the current task;
      - a task's verification needs a **manual check** only the user can do (running the app, a device, a game, a visual UI check) — finish everything automatable first, then give the user a short numbered checklist in their language and wait for the result;
      - the user says stop.
@@ -95,7 +96,7 @@ For each task (`- [ ] **Task N**`):
 
 - **When stopping after 1 task (Single-Task Mode, with more `- [ ]` tasks remaining)**:
   - Report the task result and name the next task in one line (recommended: continue, or switch to Batch for the rest; alternative: `/git` for an atomic commit while the project is green). **STOP YOUR TURN** and wait.
-- **When stopping early in Batch Mode** (blocker, failure, manual check): report what is done, what blocks, and the one question or checklist the user must answer. **STOP YOUR TURN**.
+- **When stopping early in Batch Mode** (blocker, failure, manual check, design task): report what is done, what blocks, and the one question or checklist the user must answer. **STOP YOUR TURN**.
 - **When all tasks in the active file are resolved (`[x]` / `[-]`)**:
   - Summarize the completed tasks (one line each) and **proceed automatically to `/review`** (zero-write, safe), announcing it in one line. If the user asked to skip review, offer `/git` instead.
   - If another pending task file exists in `.temp/<topic>/`, mention it as the next step after the review.
