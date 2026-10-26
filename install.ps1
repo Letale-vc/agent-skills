@@ -108,7 +108,8 @@ function Get-SkillHash {
     param([string]$Dir)
     if (-not (Test-Path $Dir)) { return $null }
     $Base = (Resolve-Path -LiteralPath $Dir).Path
-    $Files = @(Get-ChildItem -LiteralPath $Base -Recurse -File)
+    # evals/ holds skill tests; it is never installed, so it never counts toward the hash.
+    $Files = @(Get-ChildItem -LiteralPath $Base -Recurse -File | Where-Object { -not $_.FullName.Substring($Base.Length + 1).Replace('\', '/').StartsWith('evals/') })
     if ($Files.Count -eq 0) { return $null }
     $Lines = foreach ($File in $Files) {
         $Rel = $File.FullName.Substring($Base.Length + 1).Replace('\', '/')
@@ -181,7 +182,7 @@ function Install-SkillsToDirectory {
             Remove-Item -LiteralPath $DestFolder -Recurse -Force
         }
         New-Item -ItemType Directory -Path $DestFolder -Force | Out-Null
-        Copy-Item -Path (Join-Path $Folder.FullName "*") -Destination $DestFolder -Recurse -Force
+        Get-ChildItem -LiteralPath $Folder.FullName | Where-Object { $_.Name -ne 'evals' } | Copy-Item -Destination $DestFolder -Recurse -Force
         $Manifest[$Folder.Name] = $SourceHash
         Write-Host "  [+] Installed /$($Folder.Name) -> $DestFolder" -ForegroundColor Green
     }

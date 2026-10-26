@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: closes-parent-roadmap-task
+expected_outcome: |
+  The single task in .temp/arch-shop-2/ is implemented and marked [x], and because that file carries Parent: ../arch-shop/tasks.md#Task 2, Task 2 in .temp/arch-shop/tasks.md is marked [x] too.
+context:
+  scaffold_script: place-files.sh

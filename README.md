@@ -141,6 +141,7 @@ agy plugin install https://github.com/Letale-vc/agent-skills.git
 ## Структура самого репозиторію `agent-skills`
 
 * `skills/<name>/SKILL.md` — **єдине канонічне джерело правди** для `npx skills`, `agy plugin install`, `gemini skills install` та скриптів `install.ps1` / `install.sh`.
+* `skills/<name>/evals/` — тестові випадки скіла (запит, тестовий проєкт, перевірки) у форматі `claude plugin eval`; інсталятори їх не копіюють і не враховують у хеші.
 * `.agents/skills` — Directory Junction (Windows) / Symlink (Linux/macOS), який прямо вказує на `skills/` (створюється через `.\install.ps1 -SyncRepo` або `./install.sh --sync-repo`), тому редагування у будь-якій папці змінює один і той самий файл без ризику розсинхрону.
 * `plugin.json` — кореневий маніфест плагіна для Antigravity.
 * `install.ps1` / `install.sh` — скрипти швидкого локального та глобального встановлення.

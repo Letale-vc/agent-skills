@@ -140,7 +140,8 @@ get_skill_hash() {
       content_hash="$(tr -d '\r' < "$file" | openssl dgst -sha256 | awk '{print $NF}')"
     fi
     lines+=("${rel}=${content_hash}")
-  done < <(find "$base" -type f -print0)
+  # evals/ holds skill tests; it is never installed, so it never counts toward the hash.
+  done < <(find "$base" -path "$base/evals" -prune -o -type f -print0)
 
   if [ ${#lines[@]} -eq 0 ]; then
     echo ""
@@ -201,7 +202,7 @@ install_to_dir() {
 
     rm -rf "$dest_folder"
     mkdir -p "$dest_folder"
-    cp -R "$src_folder/"* "$dest_folder/"
+    find "$src_folder" -mindepth 1 -maxdepth 1 ! -name evals -exec cp -R {} "$dest_folder/" \;
     manifest["$name"]="$src_hash"
     echo "  [+] Installed /$name -> $dest_folder"
   done

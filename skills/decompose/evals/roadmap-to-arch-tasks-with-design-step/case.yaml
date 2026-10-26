@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: roadmap-to-arch-tasks-with-design-step
+expected_outcome: |
+  A new task file under .temp/arch-<area>/tasks.md holds the three roadmap steps in order, with the dependency rules in the header. Steps 1 and 2 are normal tasks; step 3 is one task with a **Design** line naming its own topic. Only .temp/ and .gitignore change, and the run stops at the checkpoint question without writing code.
+context:
+  scaffold_script: place-files.sh

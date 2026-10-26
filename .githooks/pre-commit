@@ -32,7 +32,7 @@ if [ -n "$staged_sh_files" ]; then
 fi
 
 # Markdown linting check on staged files
-staged_md_files=$(git diff --cached --name-only --diff-filter=ACMR -- ":/*.md" ":(exclude).agents/*" ":(exclude).worktrees/*" ":(exclude).temp/*")
+staged_md_files=$(git diff --cached --name-only --diff-filter=ACMR -- ":/*.md" ":(exclude).agents/*" ":(exclude).worktrees/*" ":(exclude).temp/*" ":(exclude)skills/*/evals/*")
 
 if [ -n "$staged_md_files" ]; then
   echo "  ↳ Linting staged Markdown files..."

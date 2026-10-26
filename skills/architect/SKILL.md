@@ -123,8 +123,10 @@ Nothing to change: **What this system is:**, the map, then `Architecture fits th
 
 ## 8. Forward Handoff & Terminal Turn Rule (CRITICAL)
 
-The report is the deliverable; change no files in this turn. The report lives only in this chat, so the roadmap must reach a file before the session ends: `/decompose` writes the chosen steps into `.temp/arch-<area>/tasks.md`, where *"де я зупинився?"* and `/implement` pick them up later, and each `/proposal` step opens its own topic from there. This is a gate (structure decisions are the user's). Ask one short question in the user's language, recommended answer first:
+The report is the deliverable; change no files in this turn. The report lives only in this chat, so the roadmap must reach a file before the session ends: `/decompose` writes the chosen steps into `.temp/arch-<area>/tasks.md`, where *"де я зупинився?"* and `/implement` pick them up later, and each `/proposal` step opens its own topic from there. Recommend the **whole roadmap**, `/proposal` steps included: an open decision is no reason to leave a step out, because `/decompose` turns it into a `**Design**` task that waits for that decision, while a step left out of the file is lost when the chat ends. This is a gate (structure decisions are the user's). Ask one short question in the user's language, recommended answer first:
 
-- *"Які кроки беремо? Рекомендую кроки 1–N → `/decompose` у `.temp/arch-<area>/tasks.md`."* — alternatives: name the step or finding numbers, or take a single step straight to `/proposal`.
+- *"Які кроки беремо? Рекомендую всі кроки 1–N → `/decompose` у `.temp/arch-<area>/tasks.md` (кроки з `/proposal` стануть задачами `Design`)."* — alternatives: name the step or finding numbers, or take a single step straight to `/proposal`.
+
+**Nothing to change** (no roadmap): there is no step to choose, so end with the report. Ask only if one of your assumptions (a change scenario, a second consumer) would flip the verdict, and then ask about that assumption alone.
 
 **STOP YOUR TURN IMMEDIATELY** — even in Autopilot. In a delegated (subagent) run, return the report only.
