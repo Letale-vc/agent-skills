@@ -12,7 +12,7 @@ description: Helps the user explore, shape, and articulate a raw, vague, or half
 - **FORBIDDEN ACTIONS**:
   - NEVER create, edit, or delete any files (not in `src/`, not in `.temp/`, not in `docs/`).
   - NEVER interrogate the user about low-level implementation details before the core idea is even formed.
-  - NEVER invoke `/interview`, `/intent`, or `/proposal` before the user confirms the Crystallized Idea.
+  - NEVER invoke `/interview`, `/proposal`, or `/decompose` before the user confirms the Crystallized Idea.
 - **LANGUAGE RULE**: Always communicate with the user in the language they use in the conversation.
 
 ---
@@ -22,7 +22,7 @@ description: Helps the user explore, shape, and articulate a raw, vague, or half
 Apply this skill (Stage 0 of the skill chain) when:
 
 - The user has a raw spark, intuition, or pain point they cannot fully articulate yet (*"I want something like...", "I have a vague idea...", "Not sure how to express this..."*).
-- The idea needs **expansion, framing, and concrete directions** before it is ready to be stress-tested via `/interview` or saved via `/intent`.
+- The idea needs **expansion, framing, and concrete directions** before it is ready to be stress-tested via `/interview` or written up via `/proposal`.
 
 ---
 
@@ -71,9 +71,9 @@ Ask: *"Does this accurately capture your idea (Yes / refine)?"*
 
 Until the user confirms the Crystallized Idea, **STOP YOUR TURN** after each shaping step and do not create any files.
 
-Once the user confirms it, proceed in the same turn to the recommended next skill, announcing it in one line in the user's language (both are safe — read-only or writing only `.temp/<topic>/`):
+Once the user confirms it, proceed in the same turn to the recommended next skill, announcing it in one line in the user's language (all are safe — read-only or writing only `.temp/<topic>/`):
 
 - **Edge cases, boundaries, or hidden requirements still need testing** → `/interview`.
-- **The idea is already crystal-clear and self-contained** → `/intent` to save it into `.temp/<topic>/intent.md`.
+- **The idea is already crystal-clear and self-contained** → `/proposal`, which records the Crystallized Idea as its goal (or `/decompose` for a small change).
 
 If the user instead wants to keep exploring or pivot, continue shaping the idea.

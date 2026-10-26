@@ -1,6 +1,6 @@
 ---
 name: git
-description: Organizes working tree changes into clean, atomic commits with descriptive why-focused messages and guards against committing .temp/. Use when committing, branching, or cleaning up git status via /git.
+description: Organizes working tree changes into clean, atomic commits with descriptive why-focused messages and guards against committing .temp/. Use whenever the user asks to commit or save their changes, write a commit message, create a branch, or clean up git status, or via /git.
 ---
 
 # Git (`/git`)

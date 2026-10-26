@@ -1,6 +1,6 @@
 ---
 name: spec
-description: Creates or updates declarative normative system specifications in docs/specifications/ after feature completion or for existing modules. Use via /spec.
+description: Creates or updates declarative normative system specifications in docs/specifications/ - how a module works and must behave right now - its contracts, invariants and module dependency rules. Use after a reviewed change alters public behavior, contracts or dependency rules, when the user asks to document how an existing module works, when docs/specifications/ no longer matches the code, or via /spec.
 ---
 
 # Spec (`/spec`)
@@ -25,7 +25,7 @@ Check why `/spec` was invoked:
 
 1. **Post-Implementation Sync (Active `.temp/<topic>/` exists)**:
    - Automatically resolve `.temp/<topic>/` (if 1 topic exists or obvious from chat; ask if 2+ topics are ambiguous).
-   - Read `.temp/<topic>/intent.md`, `.temp/<topic>/proposal.md` (specifically Section 3: *Impact on System Specifications*), and the implemented code in `src/`.
+   - Read `.temp/<topic>/proposal.md` (specifically Section 3: *Impact on System Specifications*) or, without one, the `## Context & Intent` header of `tasks.md`, and the implemented code in `src/`.
    - **Dependency rules**: an `/architect` topic (`.temp/arch-<area>/`) keeps its target dependency rules under `Constraints` in the `tasks.md` header, and a proposal keeps them in Section 5. Record each rule the code now actually follows as an invariant (e.g., "`Domain` MUST NOT depend on `Infrastructure`"), so `/audit` and later `/architect` runs treat a violation as a finding instead of a matter of taste. Rules for steps not yet implemented stay out.
    - If the code hasn't been reviewed yet or tasks in `.temp/<topic>/` are still unchecked (`- [ ]`), say so in one line and recommend `/review` (or finishing `/implement`) first. If the user explicitly invoked `/spec`, proceed with the update anyway — the specification can be adjusted after review.
 2. **Standalone Module Documentation (No `.temp/` needed)**:

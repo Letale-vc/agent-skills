@@ -1,6 +1,6 @@
 ---
 name: cleanup
-description: Safely inspects and cleans up completed temporary feature folders in .temp/ after explicit user confirmation (via the host's interactive question tool or a numbered text prompt). Use when finishing a feature topic or via /cleanup.
+description: Safely inspects and cleans up completed temporary feature folders in .temp/ after explicit user confirmation (via the host's interactive question tool or a numbered text prompt). Use after a topic's work is committed, when .temp/ holds finished topics, when the user asks to tidy the workspace or remove old plans and task files, or via /cleanup.
 ---
 
 # Cleanup (`/cleanup`)
@@ -24,7 +24,7 @@ description: Safely inspects and cleans up completed temporary feature folders i
 
 1. Check if `.temp/` exists and list all `<topic>` subdirectories inside it. Inside a git worktree (`git rev-parse --git-dir` differs from `git rev-parse --git-common-dir`), this is the worktree's own copy of `.temp/`: clean only that copy, never the main checkout's `.temp/` by absolute path, and mention whether the main checkout still holds the topic.
 2. If `.temp/` does not exist or is already empty, inform the user that the workspace is already clean and stop your turn.
-3. For each `<topic>` folder in `.temp/`, inspect its files (`intent.md`, `proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`) and output a brief status summary in chat:
+3. For each `<topic>` folder in `.temp/`, inspect its files (`proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`) and output a brief status summary in chat:
    - Topic name: `.temp/<topic>/`
    - Files present
    - Task status: e.g., `All tasks resolved ([x] / [-])` or `Has N unfinished tasks ([ ])` (note: tasks marked `- [-]` are cancelled and count as resolved, not unfinished).
