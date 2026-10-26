@@ -1,0 +1,4 @@
+{
+  // Eval fixtures and graders are test data, not documentation.
+  "ignores": ["skills/*/evals/**", ".agents/**", ".temp/**", "node_modules/**"]
+}

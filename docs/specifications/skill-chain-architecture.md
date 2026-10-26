@@ -81,6 +81,7 @@
 Репозиторій підтримує як локальне (проєктне), так і глобальне встановлення з контролем цілісності через маніфест хешів (`.practical-agent-skills.manifest`):
 
 * **`skills/<name>/SKILL.md`**: єдине канонічне джерело правди всіх скілів для сумісності з `npx skills add` (локально та `--global`), `agy plugin install`, `gemini skills install` та скриптів `install.ps1` / `install.sh`.
+* **`skills/<name>/evals/`**: тестові випадки скіла у форматі `claude plugin eval`; `install.ps1` / `install.sh` ніколи не копіюють цю папку і не враховують її в хеші маніфесту.
 * **`.agents/skills`**: Directory Junction (Windows) або Symlink (Linux/macOS) всередині репозиторію, який прямо вказує на `skills/` (створюється командою `.\install.ps1 -SyncRepo` або `./install.sh --sync-repo`; у PowerShell 5.1 видаляється виключно сам лінк через `.Delete()` без рекурсивного обходу цілі).
 * **`plugin.json`**: кореневий маніфест плагіна Antigravity.
 * **`install.ps1` / `install.sh`**: скрипти встановлення з повною паритетністю прапорців:

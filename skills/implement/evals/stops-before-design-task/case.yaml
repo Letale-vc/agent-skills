@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: stops-before-design-task
+expected_outcome: |
+  Task 1 is implemented with a test and marked [x]. Batch mode then stops at Task 2 because of its **Design** line and recommends /proposal in .temp/arch-shop-pricing-pkg/; it neither writes code for Task 2 nor skips ahead to Task 3, which stays [ ].
+context:
+  scaffold_script: place-files.sh

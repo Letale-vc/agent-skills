@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: review-findings-get-new-file
+expected_outcome: |
+  The findings become a new .temp/login-rate-limit/review-1-tasks.md with two tasks; the existing tasks.md is left exactly as it was.
+context:
+  scaffold_script: place-files.sh

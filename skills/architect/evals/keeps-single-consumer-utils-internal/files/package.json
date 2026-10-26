@@ -1,0 +1,5 @@
+{
+  "name": "slugtool",
+  "version": "1.0.0",
+  "bin": { "slugtool": "src/cli.js" }
+}

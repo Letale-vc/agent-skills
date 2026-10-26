@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: keeps-single-consumer-utils-internal
+expected_outcome: |
+  The skill pushes back instead of designing the library: it finds from the code that src/cli.js is the only consumer of src/utils, advises against publishing to npm and against a date-format plugin system while there is one consumer and one format, recommends at most the lowest extraction level, and changes no files.
+context:
+  scaffold_script: place-files.sh

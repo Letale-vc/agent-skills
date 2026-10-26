@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: flags-ui-import-and-split-pricing
+expected_outcome: |
+  A read-only architecture report: it flags that the domain imports UI code, that the discount rules are copied in the web cart and the API and already disagree, ties both to the mobile-client scenario, proposes a pricing module with dependency rules and a roadmap, and ends by recommending that the whole roadmap, /proposal steps included, goes to /decompose. No files change.
+context:
+  scaffold_script: place-files.sh
