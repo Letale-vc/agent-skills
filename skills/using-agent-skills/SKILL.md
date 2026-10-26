@@ -33,6 +33,7 @@ Incoming Task or Thought
  ├── 8. Cleaning up finished .temp/<topic>/ folders? → /cleanup   (Interactive confirmation cleaner)
  │
  ├── [Utility] Tests failing, build broken, or bug? ─→ /debug     (Reproduce -> Localize -> Fix)
+ ├── [Utility] Health check of existing code/repo? ──→ /audit     (Zero-Write, ranked findings)
  └── [Utility] Ready to commit or clean git status? ─→ /git       (Atomic commits & .temp/ guard)
 ```
 
