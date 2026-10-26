@@ -51,10 +51,16 @@ Inspect `git diff`, the modified files in `src/`, and the relevant artifacts in 
 
 1. **Execution & Verification Facts (for Implemented Code)**: Run the relevant test suite, typechecker, or linter in read-only mode. Did everything actually compile and pass, or did `/implement` miss a broken import, type error, or failing test?
 2. **Intent & Proposal Alignment**: Did we build what was actually agreed in `intent.md` / `proposal.md` (or the `tasks.md` context header)? Was the chosen migration strategy (`Expand-Contract` / deprecation / in-place) respected?
-3. **Non-Breaking & Edge Cases**: Are there unhandled edge cases, broken contracts, or missing test coverage?
+3. **Non-Breaking & Edge Cases**: Are there unhandled edge cases or broken contracts? Is risky logic (a branch, parser, math, state, contract, bug fix) left without a test that would fail if it broke? Judge tests by what they catch, not by coverage. Flag the opposite as **Minor**: tests that restate constants or mirror the implementation, near-identical tests that should be one parameterized test, tests that silently pass when the environment is missing, and obsolete tests left beside their replacements.
 4. **Code Quality, Simplicity & Anti-Bloat**: Is the code readable, modular, and free of dead code? Are new abstractions earning their complexity, or can the solution be simplified into fewer, clearer lines while preserving 100% behavior?
-5. **Project Rules & Specifications**: Does the change follow the project's own agent/contributor instructions (e.g., `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`: layering, naming, warnings policy, performance budgets) and keep the invariants of the affected specs in `docs/specifications/`? If a spec's behavior changed, flag that `/spec` is needed.
-6. **Workspace Hygiene**: Ensure no temporary planning files (stray `SPEC.md`, `todo.md`, `tasks/`, etc.) leaked outside `.temp/<topic>/`.
+5. **Duplication & Missed Reuse (look beyond the diff)**: For each new function, class, path/offset table, or algorithm in the diff, search the rest of the codebase for code that already does the same or nearly the same. Flag:
+   - re-implemented logic that an existing helper already covers (**Major**);
+   - near-duplicates that should share one helper/base/parameter, especially copies that have already diverged in limits, guards, or checks (**Major**, and say which behavior looks correct);
+   - repeated logic inside the diff itself (**Minor**, or **Major** if non-trivial);
+   - the opposite too: speculative abstraction with a single user (**Minor**).
+   For a task breakdown or proposal, check that each task/component has a `Reuse` line backed by an actual search, and that generalize-first work is its own earlier task.
+6. **Project Rules & Specifications**: Does the change follow the project's own agent/contributor instructions (e.g., `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`: layering, naming, warnings policy, performance budgets) and keep the invariants of the affected specs in `docs/specifications/`? If a spec's behavior changed, flag that `/spec` is needed.
+7. **Workspace Hygiene**: Ensure no temporary planning files (stray `SPEC.md`, `todo.md`, `tasks/`, etc.) leaked outside `.temp/<topic>/`.
 
 ### Output Format in Chat
 
