@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: fast-track-delegates-implementation
+expected_outcome: |
+  /flow takes the small goal on the Fast-Track route: it writes .temp/save20/tasks.md with a Context & Intent header and no proposal.md, keeps .temp/save20/flow.md as a thin log without checkboxes, hands the implementation to a subagent, and SAVE20 works with the tests green.
+context:
+  scaffold_script: place-files.sh

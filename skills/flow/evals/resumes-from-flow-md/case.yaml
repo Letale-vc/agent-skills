@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: resumes-from-flow-md
+expected_outcome: |
+  /flow resumes topic demo at the review stage written in .temp/demo/flow.md: it reviews the finished task without re-implementing it, records the review in flow.md, and stops at the next gate without committing.
+context:
+  scaffold_script: place-files.sh
