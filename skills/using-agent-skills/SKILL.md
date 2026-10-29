@@ -30,6 +30,7 @@ Incoming Task or Thought
  ├── 5. Auditing code, tasks, or proposal quality? ──→ /review    (Zero-Write auditor + test/lint check)
  ├── 6. Updating normative system documentation? ────→ /spec      (Writes docs/specifications/*.md)
  ├── 7. Cleaning up finished .temp/<topic>/ folders? → /cleanup   (Interactive confirmation cleaner)
+ ├── 8. Goal end-to-end with delegation & resume? ───→ /flow      (Conductor, writes .temp/<topic>/flow.md)
  │
  ├── [Utility] Tests failing, build broken, or bug? ─→ /debug     (Reproduce -> Localize -> Fix)
  ├── [Utility] Health check of existing code/repo? ──→ /audit     (Zero-Write, ranked findings)
@@ -62,6 +63,8 @@ Menus cost the user a turn and the agent a full context re-read. Ask only where 
 ### Autopilot Mode (Zero-Stop Chaining on User Request)
 
 If the user explicitly asks to run in **Autopilot** (e.g., *"роби до кінця"*, *"autopilot"*, *"all the way without stops"*), also pass the **checkpoint** gates (5) by taking the `(Recommended)` option, following the handoff path from stage to stage (e.g., `/decompose` → `/implement` Batch → `/review` → `/spec`). Gates 1–4 still stop the run.
+
+For a **new goal** the user wants taken all the way, recommend `/flow` instead: the same gates, plus delegation to fresh subagents and resumable state in `.temp/<topic>/flow.md`. A request in the middle of the chain (e.g., during `/implement`) keeps this inline Autopilot.
 
 ---
 
@@ -109,7 +112,7 @@ If the user explicitly asks to run in **Autopilot** (e.g., *"роби до кі�
 When invoked directly (or when the user asks *"де я зупинився?"* / *"what's the current status?"* in a new chat session):
 
 1. **Scan `.temp/` for Active Topics**:
-   - List each `<topic>` folder in `.temp/`, which artifacts exist (`proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`), the count of completed `[x]`, cancelled `[-]`, and remaining `[ ]` tasks, and **the exact next `- [ ]` task in priority order**.
+   - List each `<topic>` folder in `.temp/`, which artifacts exist (`proposal.md`, `tasks.md`, `review-N-tasks.md`, `subtasks-*.md`), the count of completed `[x]`, cancelled `[-]`, and remaining `[ ]` tasks, and **the exact next `- [ ]` task in priority order**. If the topic has `flow.md`, also show its `Stage` and `Next`.
 2. **Recommend Entry Point**:
-   - Name the single **`(Recommended)`** next step with a one-line reason (e.g., resume `/implement` Batch on the next unchecked task, `/proposal` in the named topic if that task has a `**Design**:` line, run `/review` if all tasks are `[x]`, or start a Fast-Track `/decompose`), plus at most one alternative.
-3. **STOP YOUR TURN IMMEDIATELY** and wait for the user's go-ahead (unless Autopilot was explicitly requested): a status question is answered, not acted on.
+   - Name the single **`(Recommended)`** next step with a one-line reason (e.g., `/flow <topic>` when the topic has `flow.md`, resume `/implement` Batch on the next unchecked task, `/proposal` in the named topic if that task has a `**Design**:` line, run `/review` if all tasks are `[x]`, or start a Fast-Track `/decompose`), plus at most one alternative.
+3. **STOP YOUR TURN IMMEDIATELY** and wait for the user's go-ahead (unless Autopilot was explicitly requested; *"продовж flow <topic>"* counts and hands the topic to `/flow`): a status question is answered, not acted on.
