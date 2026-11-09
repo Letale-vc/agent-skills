@@ -43,7 +43,7 @@ Delegate by role. The concrete agent and model for each role come from the proje
 | Implementation | one `/implement` task per subagent | the task's `**Model**:` tag |
 | Debug | a full-gate failure → `/debug` | `high` |
 | Review | `/review` with a fresh context | `high` |
-| Spec | `/spec` after an `APPROVED` review that needs it | `standard` |
+| Spec | `/spec` after an approving review (`APPROVED` or `APPROVED WITH NOTES`) that needs it | `standard` |
 | Main session | `/interview`, `/proposal`, `/decompose`, gates, full gate, `flow.md` | session model |
 
 Delegation follows the chain's own rules (`/using-agent-skills`, behavior 9; `/implement`, Section 3): the subagent gets the full task text plus the `## Context & Intent` header (or the relevant `proposal.md` excerpt), never this session's reasoning; it does not ask the user and reports blockers; the main session checks the report and updates the checkboxes. Keep reports in the main context, not file dumps.
@@ -58,7 +58,7 @@ Follow each stage skill's own Forward Handoff to the next stage. `/flow` adds on
 - **Full Lifecycle**: `/interview` (only if the goal is vague) → `/proposal` → the Fast-Track chain.
 - **Branch check of `/implement`** (on `main` / `master`): take the recommended answer, create `feat/<topic>`, and announce it in one line; a branch is reversible.
 - **Full gate**: the project's full build-and-test command from its instructions (e.g., a verify script), run once after the implementation batch and before `/review`; without one, the build and test commands from the instructions; without those, skip it and say so in `Log`. It comes on top of the checks each task runs, which `/implement` and the project's instructions decide. Failure → Debug role → full gate again; the same failure after 3 attempts → gate 3.
-- **Review**: the Review role gets the topic path, the active task file and the diff range. `APPROVED` → the review's next step; `CHANGES RECOMMENDED` → gate 3. Once the user picks findings, `/decompose` writes `review-<N>-tasks.md` and the loop continues from `/implement`.
+- **Review**: the Review role gets the topic path, the active task file and the diff range. `APPROVED` or `APPROVED WITH NOTES` → the review's next step (the notes go into `Log` in one line, not into tasks); `CHANGES RECOMMENDED` → gate 3. Once the user picks findings, `/decompose` writes `review-<N>-tasks.md` and the loop continues from `/implement`.
 
 ---
 
