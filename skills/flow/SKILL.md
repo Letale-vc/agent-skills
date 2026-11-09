@@ -22,6 +22,8 @@ description: Thin conductor that runs a goal through the skill chain end to end 
 
 1. **Resume**: `/flow <topic>`, *"продовж flow <topic>"*, or `/flow` when one topic has a `flow.md`.
    - Read `.temp/<topic>/flow.md` and continue at its `Stage` / `Next`.
+   - `Owner` names another session that the host shows as still running (or, without such a tool, the file changed in the last 30 minutes) → do not conduct: two conductors break the same files. Ask the user (gate 2) whether to stop here or take over; on take-over, write this session into `Owner`.
+   - Otherwise write this session into `Owner` (the host's session name or id, else the date and time) before the first stage.
    - No `flow.md` → find the stage from the artifacts with the Status Mode scan (`/using-agent-skills`, Section 4) and create `flow.md` from it.
    - The artifacts show later progress than `Stage` (a stage finished outside `/flow`) → the artifacts win: fix the header and add a `Log` line.
 2. **New goal**: `/flow <goal>`.
@@ -81,6 +83,7 @@ A thin log of at most ~60 lines. The header is rewritten; `Decisions` and `Log` 
 
 - **Goal**: <one sentence>
 - **Route**: Fast-Track | Full Lifecycle
+- **Owner**: <the session conducting the run: host session name or id, else date and time>
 - **Stage**: interview | proposal | decompose | implement | verify | review | spec | git | done
 - **Active task file**: tasks.md | review-<N>-tasks.md | —
 - **Next**: <the exact next step>
