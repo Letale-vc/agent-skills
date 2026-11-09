@@ -42,7 +42,7 @@ Incoming Task or Thought
 
 Do **NOT** force every task through every stage. Recommend the shortest safe route based on scope:
 
-- **Micro-change / Bugfix**: Jump straight to `/debug` or `/implement`.
+- **Micro-change / Bugfix**: Jump straight to `/debug` or `/implement`. Work that fits one or two tasks also skips `/decompose`: `/implement` gets the task written out in the prompt.
 - **Small / Medium Feature (Fast-Track)**: Jump straight to `/decompose` (which embeds a compact `## Context & Intent` header directly at the top of `.temp/<topic>/tasks.md`, skipping a separate `proposal.md`) → `/implement` → `/review`.
 - **Large / Architectural Feature (Full Lifecycle)**: `/interview` (or `/idea`) → `/proposal` → `/decompose` → `/implement` → `/review` → `/spec` → `/cleanup`.
 - **Restructuring / Structure in Question**: `/architect` (map, target structure, roadmap) → `/decompose` (chosen steps into `.temp/arch-<area>/tasks.md`; a step with an open design opens its own `/proposal` topic) → `/implement` → `/review` → `/spec` (dependency rules become invariants).
