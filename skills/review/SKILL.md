@@ -67,7 +67,7 @@ Inspect `git diff`, the modified files in `src/`, and the relevant artifacts in 
 Present a structured, concise report directly in the chat:
 
 ```markdown
-## Review Verdict: [APPROVED | CHANGES RECOMMENDED]
+## Review Verdict: [APPROVED | APPROVED WITH NOTES | CHANGES RECOMMENDED]
 Active topic: `.temp/<topic>/`
 Verification: `<Tests / Typecheck / Linter status, or "Static artifact audit">`
 
@@ -78,6 +78,8 @@ Verification: `<Tests / Typecheck / Linter status, or "Static artifact audit">`
 1. **[Critical / Major / Minor]** `<file_path#Lxx>` — <Clear description of the issue and why it matters>
    - *Recommendation*: <How it should be fixed>
 ```
+
+**Verdict by severity**: `CHANGES RECOMMENDED` needs at least one Critical or Major finding. Only Minor findings → `APPROVED WITH NOTES`; none → `APPROVED`. Do not raise a Minor finding to Major to get a gate: a finding is Major only when it names a concrete wrong result or the exact code of a structural problem.
 
 ---
 
@@ -90,7 +92,7 @@ Remember: **`/review` NEVER creates `review-N-tasks.md`, edits `docs/specificati
   - If the user disagrees with a finding or asks pros/cons, discuss it and restate the pending decision in one line.
   - **STOP YOUR TURN IMMEDIATELY.** Do not call any write or command tools.
 
-- **Case B — Zero Issues / Clean Pass (`APPROVED`)** — proceed in the same turn, announcing the step in one line:
+- **Case B — Clean Pass (`APPROVED` or `APPROVED WITH NOTES`)** — proceed in the same turn, announcing the step in one line. With notes, list the Minor findings in one line each and add that they can go into `review-<N>-tasks.md` later if the user asks; they do not stop the chain and get no tasks by default:
   - **Public behavior, contracts, or APIs changed** → `/spec` to create or update the normative specification in `docs/specifications/`.
   - **Module boundaries or dependency rules changed** (an `/architect` topic, or a proposal whose Section 5 sets dependency rules) → `/spec` too, even when the change is internal: the rules only hold if they become invariants that `/audit` and `/architect` can check.
   - **Internal refactoring/bugfix with no spec impact** → `/git` to build the commit plan (it asks before committing).

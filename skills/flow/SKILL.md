@@ -22,6 +22,8 @@ description: Thin conductor that runs a goal through the skill chain end to end 
 
 1. **Resume**: `/flow <topic>`, *"продовж flow <topic>"*, or `/flow` when one topic has a `flow.md`.
    - Read `.temp/<topic>/flow.md` and continue at its `Stage` / `Next`.
+   - `Owner` names another session that the host shows as still running (or, without such a tool, the file changed in the last 30 minutes) → do not conduct: two conductors break the same files. Ask the user (gate 2) whether to stop here or take over; on take-over, write this session into `Owner`.
+   - Otherwise write this session into `Owner` (the host's session name or id, else the date and time) before the first stage.
    - No `flow.md` → find the stage from the artifacts with the Status Mode scan (`/using-agent-skills`, Section 4) and create `flow.md` from it.
    - The artifacts show later progress than `Stage` (a stage finished outside `/flow`) → the artifacts win: fix the header and add a `Log` line.
 2. **New goal**: `/flow <goal>`.
@@ -43,7 +45,7 @@ Delegate by role. The concrete agent and model for each role come from the proje
 | Implementation | one `/implement` task per subagent | the task's `**Model**:` tag |
 | Debug | a full-gate failure → `/debug` | `high` |
 | Review | `/review` with a fresh context | `high` |
-| Spec | `/spec` after an `APPROVED` review that needs it | `standard` |
+| Spec | `/spec` after an approving review (`APPROVED` or `APPROVED WITH NOTES`) that needs it | `standard` |
 | Main session | `/interview`, `/proposal`, `/decompose`, gates, full gate, `flow.md` | session model |
 
 Delegation follows the chain's own rules (`/using-agent-skills`, behavior 9; `/implement`, Section 3): the subagent gets the full task text plus the `## Context & Intent` header (or the relevant `proposal.md` excerpt), never this session's reasoning; it does not ask the user and reports blockers; the main session checks the report and updates the checkboxes. Keep reports in the main context, not file dumps.
@@ -58,7 +60,7 @@ Follow each stage skill's own Forward Handoff to the next stage. `/flow` adds on
 - **Full Lifecycle**: `/interview` (only if the goal is vague) → `/proposal` → the Fast-Track chain.
 - **Branch check of `/implement`** (on `main` / `master`): take the recommended answer, create `feat/<topic>`, and announce it in one line; a branch is reversible.
 - **Full gate**: the project's full build-and-test command from its instructions (e.g., a verify script), run once after the implementation batch and before `/review`; without one, the build and test commands from the instructions; without those, skip it and say so in `Log`. It comes on top of the checks each task runs, which `/implement` and the project's instructions decide. Failure → Debug role → full gate again; the same failure after 3 attempts → gate 3.
-- **Review**: the Review role gets the topic path, the active task file and the diff range. `APPROVED` → the review's next step; `CHANGES RECOMMENDED` → gate 3. Once the user picks findings, `/decompose` writes `review-<N>-tasks.md` and the loop continues from `/implement`.
+- **Review**: the Review role gets the topic path, the active task file and the diff range. `APPROVED` or `APPROVED WITH NOTES` → the review's next step (the notes go into `Log` in one line, not into tasks); `CHANGES RECOMMENDED` → gate 3. Once the user picks findings, `/decompose` writes `review-<N>-tasks.md` and the loop continues from `/implement`.
 
 ---
 
@@ -81,6 +83,7 @@ A thin log of at most ~60 lines. The header is rewritten; `Decisions` and `Log` 
 
 - **Goal**: <one sentence>
 - **Route**: Fast-Track | Full Lifecycle
+- **Owner**: <the session conducting the run: host session name or id, else date and time>
 - **Stage**: interview | proposal | decompose | implement | verify | review | spec | git | done
 - **Active task file**: tasks.md | review-<N>-tasks.md | —
 - **Next**: <the exact next step>
