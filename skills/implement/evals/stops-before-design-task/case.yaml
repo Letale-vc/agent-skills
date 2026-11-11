@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: stops-before-design-task
 expected_outcome: |
-  Task 1 is implemented with a test and marked [x]. Batch mode then stops at Task 2 because of its **Design** line and recommends /proposal in .temp/arch-shop-pricing-pkg/; it neither writes code for Task 2 nor skips ahead to Task 3, which stays [ ].
+  Task 1 is implemented with a test by one pas:implementer subagent and marked [x]. Batch mode then stops at Task 2 because of its **Design** line and recommends /pas:proposal in .temp/arch-shop-pricing-pkg/; it spawns no implementer for Task 2, writes no code for it and does not skip ahead to Task 3, which stays [ ].
 context:
   scaffold_script: place-files.sh

@@ -1,12 +1,12 @@
 {
   "name": "practical-agent-skills",
   "displayName": "Practical Agent Skills",
-  "version": "1.0.0",
-  "description": "Modular engineering skill chain for AI coding agents: from a raw idea through RFC, TDD implementation, review and specs to clean commits, with strict .temp/ isolation and default-proceed gates.",
+  "version": "2.0.0",
+  "description": "Engineering pipeline for coding agents that routes work by size: small fixes go straight to a TDD implementer, medium work gets a task file, implementation and one review, large work runs proposal, breakdown, implementation batches, parallel reviews and specs. Resumable state in .temp/<topic>/, explicit gates only at commits, design choices, review findings and manual checks, and git safety hooks.",
   "suggestedPrompts": [
-    "/idea Help me shape a raw idea into a clear concept",
-    "/interview Stress-test my feature requirements one question at a time",
-    "/using-agent-skills Which skill should we start with for my task?"
+    "/flow Where did I leave off, and what is the next step?",
+    "/flow Add the change I describe and take it all the way to a commit",
+    "/shape Help me turn a raw idea into a clear goal with success criteria",
+    "/audit Audit this repository and rank what to fix first"
   ]
 }
-

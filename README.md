@@ -1,148 +1,146 @@
 # Practical Agent Skills
 
-Модульна система **інженерних скілів** для AI-агентів (Antigravity, Claude Code, Cursor, Gemini CLI, Codex, OpenCode), яка повністю ізолює чернетки розробки в `.temp/<topic>/`, відокремлює нормативні специфікації в `docs/specifications/` та веде розробника за принципом **Default-Proceed**: безпечні кроки агент робить сам (з одним рядком «→ Далі: …»), а питає лише на воротах — перед комітом чи видаленням, при архітектурних рішеннях, збоях, ручних перевірках і на чекпоінтах.
+Плагін Claude Code **`pas`** з інженерним ланцюжком для AI-агентів: агент сам обирає маршрут за розміром задачі, код пишуть субагенти за TDD, чернетки живуть лише в `.temp/<topic>/`, нормативні специфікації — у `docs/specifications/`. Безпечні кроки агент робить сам (з одним рядком «→ Next: …»), а питає лише на воротах: коміт чи видалення, рішення дизайну, знахідки рев'ю, ручні перевірки, збій, який не вдалося виправити.
+
+Для Codex, Antigravity та інших агентів той самий вміст ставлять скрипти `install.ps1` / `install.sh`.
 
 ---
 
-## Quick Start (Швидке встановлення)
-
-### 1. Через універсальний `npx skills` CLI
+## Встановлення в Claude Code
 
 ```bash
-# Встановити всі скіли локально у поточний проєкт (з GitHub або локального шляху)
-npx skills add Letale-vc/agent-skills
-# або з локального клону:
-npx skills add D:\practik\agent-skills
+# 1. Додати marketplace letale-skills (з GitHub або з локального клону)
+claude plugin marketplace add Letale-vc/agent-skills
+claude plugin marketplace add D:/practik/agent-skills
 
-# Встановити ГЛОБАЛЬНО на комп'ютер (для всіх проєктів)
-npx skills add Letale-vc/agent-skills --global
+# 2. Встановити плагін (для себе; --scope project записує його в .claude/settings.json проєкту)
+claude plugin install pas@letale-skills
+claude plugin install pas@letale-skills --scope project
 
-# Переглянути список доступних скілів перед встановленням
-npx skills add D:\practik\agent-skills --list
-
-# Встановити лише окремий скіл
-npx skills add D:\practik\agent-skills --skill interview
+# Оновлення
+claude plugin marketplace update letale-skills
+claude plugin update pas@letale-skills
 ```
 
-### 2. Через вбудований скрипт `install.ps1` (Windows) або `install.sh` (Linux/macOS/Git Bash)
+Щоб плагін вмикався для всіх, хто відкриває проєкт, закомітьте в `.claude/settings.json` проєкту:
 
-Працює миттєво без Node.js та автоматично додає `.temp/` у `.gitignore` цільового проєкту:
+```json
+{
+  "extraKnownMarketplaces": {
+    "letale-skills": {
+      "source": { "source": "github", "repo": "Letale-vc/agent-skills" }
+    }
+  },
+  "enabledPlugins": {
+    "pas@letale-skills": true
+  }
+}
+```
+
+* Для локального клону замість `github` — `"source": { "source": "directory", "path": "D:/practik/agent-skills" }`.
+* `extraKnownMarketplaces` з проєктного файлу діє лише після того, як користувач довірить папку (workspace trust); `enabledPlugins` вмикає плагін, але кожен користувач один раз встановлює його сам.
+* Проєктні `.claude/agents/` з тими самими іменами (`implementer`, `reviewer`, …) затіняють агентів плагіна, а старі копії скілів у `.claude/skills/` дублюють його: видаліть їх (`.\install.ps1 -Target <проєкт> -Claude -Prune` прибирає те, що туди колись скопіював інсталятор).
+* Розробка самого плагіна: `claude --plugin-dir D:/practik/agent-skills` вантажить його на одну сесію; `claude plugin validate . --strict` перевіряє маніфести.
+
+Скіли викликаються як `/pas:<name>`, агенти мають імена `pas:<name>`.
+
+---
+
+## Маршрути за розміром
+
+Один вхід — **`/pas:flow <ціль>`**: він оголошує маршрут одним рядком і веде роботу до воріт. Без аргументу `/pas:flow` показує, де зупинилась робота, і називає наступний крок; `/pas:flow <topic>` продовжує прогін із `.temp/<topic>/flow.md` у новій сесії.
+
+| Розмір | Коли | Маршрут |
+| --- | --- | --- |
+| **Малий** | одна-дві задачі, баг | задача в промпті → `pas:implementer` (або `/pas:debug`) → повна перевірка → `/pas:git`; без `.temp/` і без рев'ю |
+| **Середній** | до ~5 задач у наявних модулях, без нового публічного контракту, проєкту чи шару | головна сесія пише `.temp/<topic>/tasks.md` → батч `pas:implementer` → повна перевірка (full check) → один `pas:reviewer` → `/pas:spec` (якщо змінилась специфікована поведінка) → `/pas:git` |
+| **Великий** | новий контракт, проєкт чи шар, робота між шарами, понад ~5 задач | `/pas:shape` (якщо ціль неясна) → `/pas:proposal` (2–3 `pas:architect` паралельно, вибір варіанту) → `pas:decomposer` → батчі `pas:implementer` → повна перевірка (full check) → два `pas:reviewer` паралельно → `pas:spec-writer` → `/pas:git` |
+
+Модель і effort `implementer` задає оцінка складності задачі (D/V/S, [`shared/complexity.md`](shared/complexity.md)); проєкт може перевизначити відображення у своєму `CLAUDE.md`. Команди збірки, тестів і повної перевірки (full check) агенти беруть з `CLAUDE.md` / `AGENTS.md` проєкту.
+
+---
+
+## Скіли
+
+| Скіл | Режим | Призначення |
+| --- | --- | --- |
+| [`/pas:flow`](skills/flow/SKILL.md) | conductor | Статус і наступний крок; вибір маршруту; веде етапи через агентів, стан у `.temp/<topic>/flow.md`, продовження з нової сесії. |
+| [`/pas:shape`](skills/shape/SKILL.md) | read-only | Сира ідея чи нечіткий запит → 2–3 напрямки з рекомендацією, до 5 питань по одному з гіпотезою, блок наміру (мета, критерії успіху, межі). |
+| [`/pas:proposal`](skills/proposal/SKILL.md) | writes `.temp/` | Дизайн великої задачі в `proposal.md`: мета й критерії, конфлікти з кодом і специфікаціями, де живе новий код, 2–3 варіанти від `pas:architect`, таблиця порівняння, вибір користувача. |
+| [`/pas:decompose`](skills/decompose/SKILL.md) | writes `.temp/` | Proposal, знахідки рев'ю чи аудиту, задача на розбиття → новий файл задач з оцінкою складності; ніколи не перезаписує наявні. |
+| [`/pas:implement`](skills/implement/SKILL.md) | writes code | Батч задач без пауз: один `pas:implementer` на задачу, TDD (Red → Green → Verify), чекбокси, повна перевірка (full check) раз на батч, ручні перевірки одним чеклістом наприкінці. |
+| [`/pas:review`](skills/review/SKILL.md) | writes `.temp/` | Свіжі `pas:reviewer` (один або два паралельно), лише знахідки з упевненістю ≥ 80, вердикт і наступний крок; також рев'ю proposal і файлів задач. |
+| [`/pas:debug`](skills/debug/SKILL.md) | writes code | Reproduce → Localize → Root cause → Fix & guard з регресійним тестом. |
+| [`/pas:spec`](skills/spec/SKILL.md) | writes docs | Оновлює `docs/specifications/` через `pas:spec-writer`, лише якщо в проєкті вони є. |
+| [`/pas:git`](skills/git/SKILL.md) | git operator | План атомарних Conventional Commits, одне підтвердження, захист `.temp/`; наприкінці пропонує видалити завершену `.temp/<topic>/`. |
+| [`/pas:audit`](skills/audit/SKILL.md) | read-only | `code`: баги, безпека, навантаження, код без тестів, дублювання й зайве; `structure`: модулі, напрямок залежностей, що виносити, цільова структура й дорожня карта. Далі — `/pas:decompose` для обраних знахідок. |
+
+## Агенти
+
+| Агент | Модель | Роль |
+| --- | --- | --- |
+| [`pas:scout`](agents/scout.md) | haiku | Read-only пошук по коду на одне вузьке питання: висновки й 5–10 ключових файлів `path:line`. |
+| [`pas:architect`](agents/architect.md) | opus, high | Read-only: один варіант дизайну під заданий кут (minimal / clean / pragmatic). |
+| [`pas:decomposer`](agents/decomposer.md) | opus, high | Пише один новий файл задач за [шаблоном](shared/task-template.md); не питає, повертає `blocked:`. |
+| [`pas:implementer`](agents/implementer.md) | з оцінки задачі | Одна задача за TDD з перевіркою проєкту, без комітів, 3 спроби, режим debug, звіт із доказами. |
+| [`pas:reviewer`](agents/reviewer.md) | opus, high | Zero-write рев'ю з фокусом (correctness або simplicity+conventions), упевненість 0–100, звіт ≥ 80. |
+| [`pas:spec-writer`](agents/spec-writer.md) | sonnet, high | Нормативні специфікації поточного стану. |
+
+Спільні правила — один раз у [`shared/`](shared/): [`rules.md`](shared/rules.md) (режими, `.temp/`, теми, worktree, ворота, перевикористання, гігієна контексту, мова), [`complexity.md`](shared/complexity.md) (маршрути, оцінка, бюджет контексту), [`task-template.md`](shared/task-template.md). Хуки плагіна: на старті сесії — список незавершених тем `.temp/`; перед Bash/PowerShell — блокування force push, `reset --hard`, `git clean` і `--no-verify`.
+
+---
+
+## Інші агенти: `install.ps1` / `install.sh`
+
+Скрипти копіюють `skills/<name>/` (без `evals/`) у `.agents/skills`, а `shared/` і `agents/`, на які посилаються скіли, — поруч у `.agents/pas/`. Посилання `${CLAUDE_PLUGIN_ROOT}/…` у скопійованих файлах переписуються: `.agents/pas/…` від кореня проєкту для проєктного встановлення, абсолютний шлях — для глобального. Скрипт також додає `.temp/` у `.gitignore` проєкту.
 
 ```powershell
-# Оновити ВСЮДИ однією командою (Junction у репо + глобально + у всіх сусідніх проєктах, де вже є .agents/skills)
-.\install.ps1 -All
-
-# Примусово перезаписати локально змінені скіли та видалити застарілі/перейменовані скіли
-.\install.ps1 -All -Force -Prune
-
-# Встановити ГЛОБАЛЬНО на ПК (~/.gemini/config/skills та ~/.agents/skills)
-.\install.ps1 -Global
-
-# Встановити ЛОКАЛЬНО у конкретний проєкт
-.\install.ps1 -Target "D:\practik\MyProject"
-
-# Встановити лише обрані скіли у проєкт
-.\install.ps1 -Target "D:\practik\MyProject" -Skill idea,interview,proposal,decompose
-
-# Claude Code: ГЛОБАЛЬНО (~/.claude/skills)
-.\install.ps1 -Global -Claude
-
-# Claude Code: ЛОКАЛЬНО у репозиторій (<проєкт>/.claude/skills)
-.\install.ps1 -Target "D:\practik\MyProject" -Claude
-
-# Зв'язати .agents/skills -> skills/ через Directory Junction у цьому репозиторії
-.\install.ps1 -SyncRepo
+.\install.ps1 -Target "D:\path\to\project"                  # <проєкт>/.agents/skills + .agents/pas
+.\install.ps1 -Target "D:\path\to\project" -Skill flow,implement
+.\install.ps1 -Global                                       # ~/.agents/skills і ~/.gemini/config/skills
+.\install.ps1 -All -Force -Prune                            # усюди: junction у репо, глобально, сусідні проєкти з .agents/skills
+.\install.ps1 -Target "D:\path\to\project" -Claude -Prune   # Claude Code: друкує команди плагіна, прибирає старі копії з .claude/skills
+.\install.ps1 -SyncRepo                                     # .agents/skills -> skills/ у цьому репозиторії
 ```
 
-Для Bash (Linux / macOS / Git Bash):
-
 ```bash
+./install.sh --target /path/to/project [--skill flow --skill implement]
+./install.sh --global
 ./install.sh --all [--force] [--prune]
-./install.sh --global [--force] [--prune]
-./install.sh --target /path/to/my-project
-./install.sh --target /path/to/my-project --skill interview --skill proposal
+./install.sh --target /path/to/project --claude [--prune]
 ./install.sh --sync-repo
-./install.sh --global --claude                       # ~/.claude/skills
-./install.sh --target /path/to/my-project --claude   # <проєкт>/.claude/skills
 ```
 
-`-All` також оновлює `~/.claude/skills` та `.claude/skills` у сусідніх проєктах, якщо ці папки вже існують.
-
-### 3. Як нативний плагін Antigravity (`agy`)
-
-```bash
-# Із локального клону
-agy plugin install D:\practik\agent-skills
-
-# Або напряму з Git-репозиторію
-agy plugin install https://github.com/Letale-vc/agent-skills.git
-```
+* Маніфест `.practical-agent-skills.manifest` зберігає хеш кожного встановленого скіла: локально змінений скіл пропускається без `-Force`; `-Prune` видаляє скіли, яких більше немає в репозиторії (у 2.0 — `using-agent-skills`, `idea`, `interview`, `architect`, `cleanup`); скіли проєкту поза маніфестом не чіпаються.
+* `.agents/pas/` належить інсталятору й перезаписується щоразу.
+* На хості без префікса плагіна `/pas:<name>` у тексті скілів означає скіл `<name>`, а `pas:<agent>` — визначення `.agents/pas/agents/<agent>.md`, за яким головна сесія працює сама, якщо субагентів немає.
+* `npx skills add` копіює лише папки `skills/`, тож посилання на `shared/` і `agents/` там не працюють; для не-Claude агентів використовуйте скрипти. Кореневий [`plugin.json`](plugin.json) — маніфест для Antigravity (`agy plugin install`).
 
 ---
 
-## Усі скіли системи
-
-### Основний ланцюжок розробки (The Lifecycle Chain)
-
-| # | Скіл | Режим&nbsp;доступу | Призначення |
-| :---: | :--- | :--- | :--- |
-| **0** | [`/idea`](skills/idea/SKILL.md) | `Read-Only` | Допомагає розвинути і сформулювати сиру/нечітку думку через генерацію напрямків, рекомендацій та навідних питань. Видає блок `Crystallized Idea`. |
-| **1** | [`/interview`](skills/interview/SKILL.md) | `Read-Only` | Виявляє приховані вимоги та межі (1 питання за раз із гіпотезою `GUESS`, оцінкою `CONFIDENCE` та жорстким лімітом **макс. 3–5 питань**, решта йде в `Assumptions`). |
-| **2** | [`/proposal`](skills/proposal/SKILL.md) | `Writer` (`.temp/<topic>/proposal.md`) | Створює технічний RFC: фіксує мету, критерії успіху й межі теми, перевіряє версії залежностей і пропонує стратегію інтеграції: **Expand-Contract** (паралельна реалізація з deprecation/видаленням) або **In-Place**. Бюджет розміру: ціль ≤ 150 рядків, жорсткий ліміт 300, без changelog-ів. |
-| **3** | [`/decompose`](skills/decompose/SKILL.md) | `Append-Writer` (`.temp/<topic>/*tasks.md`) | Розбиває план, чат-дискусію або зауваження рев'ю на неруйнівні задачі з шапкою `Context & Intent`, вказівником `Parent:` для підзадач, тегом `Model: high/standard` (яка модель виконує задачу) рядком `Manual check:` для ручних перевірок та рядком `Design:` для кроків із ще не узгодженим дизайном (напр., з `/architect`). **Ніколи не перезаписує старі файли задач**. |
-| **4** | [`/implement`](skills/implement/SKILL.md) | `Writer` (`src/`, тести, `[x]`/`[-]`) | Виконує задачі за TDD (`Red → Green → Verify`) там, де тест справді щось ловить (нова логіка, баг-фікс; доповнює наявний тест замість нового), **у Batch-режимі за замовчуванням** (Single-Task — на прохання), зупиняється лише на блокерах, ручних перевірках і задачах із `Design:`, обирає модель субагента за тегом `Model`, ігнорує закриті `100% [x]/[-]` файли та відмічає прогрес `[ ]` → `[x]` або скасування `[-]`. |
-| **5** | [`/review`](skills/review/SKILL.md) | `Zero-Write Auditor` | Не модифікує жодних вихідних чи відстежуваних файлів, але **запускає read-only перевірки** (`git diff`, тести в `--ci`, тайпчекер, лінтер). При зауваженнях рекомендує `/decompose`, при успіху — `/spec` або `/cleanup`. |
-| **6** | [`/spec`](skills/spec/SKILL.md) | `Writer` (`docs/specifications/`) | Створює або оновлює декларативні нормативні специфікації системи у `docs/specifications/` (як система працює зараз, без історії міграцій). |
-| **7** | [`/cleanup`](skills/cleanup/SKILL.md) | `Cleaner` (`.temp/`) | Показує стан тем у `.temp/` і запитує підтвердження (через структурований інструмент запитань хоста або текстовий fallback), які завершені папки видалити, а які залишити. |
-
-### Fast-Track маршрути та режим Autopilot (без зайвої бюрократії)
-
-Не кожна задача потребує проходження всіх етапів або ручного підтвердження на кожному кроці:
-
-* **Micro-fix / Bugfix**: одразу `/debug` або `/implement`.
-* **Small / Medium Feature (Fast-Track)**: одразу `/decompose` (створює `.temp/<topic>/tasks.md` із вбудованою шапкою `## Context & Intent`, минаючи `proposal.md`) → `/implement` → `/review`.
-* **Large / Architectural Feature**: `/interview` (або `/idea`) → `/proposal` → `/decompose` → `/implement` → `/review` → `/spec` → `/cleanup`.
-* **Перебудова структури / архітектурне питання**: `/architect` (карта, цільова структура, дорожня карта) → `/decompose` (обрані кроки в `.temp/arch-<area>/tasks.md`; крок із відкритим дизайном отримує власну тему з `/proposal`) → `/implement` → `/review` → `/spec` (правила залежностей стають інваріантами).
-* **Default-Proceed**: безпечні й зворотні кроки (read-only роботу, запис у `.temp/<topic>/`, `/review` після `/implement`) агент виконує без меню. Зупиняється й ставить **одне коротке питання** лише на воротах: (1) коміт, push, видалення `.temp/`; (2) рішення, які може ухвалити тільки користувач (конфлікт вимог, архітектура, нова залежність); (3) збої та вердикт `CHANGES RECOMMENDED`; (4) ручні перевірки; (5) чекпоінти — затвердження `proposal.md` і старт коду після `/decompose`.
-* **Autopilot Mode**: якщо попросити агента *«роби до кінця»* (*autopilot*), скіли проходять також чекпоінти (5) і зупиняються лише на воротах 1–4. Нову ціль, яку треба провести до кінця з делегуванням субагентам і продовженням у новій сесії, веде [`/flow`](skills/flow/SKILL.md).
-
-### Мета-роутер та утиліти (Meta & Utility Skills)
-
-| Скіл | Режим&nbsp;доступу | Призначення |
-| :--- | :--- | :--- |
-| [`/using-agent-skills`](skills/using-agent-skills/SKILL.md) | `Read-Only` | Карта вибору скілів (Fast-Track, Autopilot), режим відновлення контексту **«Де я зупинився?»** (сканування `.temp/`) + базові правила (Default-Proceed, ізоляція `.temp/` і worktree, перевикористання замість дублювання, вибір моделі для субагентів, гігієна контексту тощо). |
-| [`/flow`](skills/flow/SKILL.md) | `Conductor` | Проводить ціль через ланцюжок скілів до кінця (Autopilot): пошук, код, debug, рев'ю і спеки роблять субагенти зі свіжим контекстом, а стан живе в `.temp/<topic>/flow.md`, тож нова сесія продовжує фразою *«продовж flow <topic>»*. Зупиняється лише на воротах 1–4. |
-| [`/debug`](skills/debug/SKILL.md) | **Diagnostic&nbsp;&amp;&nbsp;Fix** | Пошук першопричини багів (включно з flaky/intermittent багами) за правилом `Stop-the-Line`: `Reproduce` → `Localize` → `Root Cause Hypothesis` → фікс + тест. |
-| [`/git`](skills/git/SKILL.md) | **Git&nbsp;Operator** | Групування змін у чисті атомарні коміти з фокусом на *why*, захист від потрапляння `.temp/` у коміт та обов'язкове підтвердження перед `git commit`. |
-| [`/audit`](skills/audit/SKILL.md) | `Zero-Write Auditor` | Разовий аудит усього репо або папки без плану: баги, безпека й втрата даних, що ламається під реальним навантаженням, ризиковий код без тестів, повільні місця, дублювання та код на видалення/злиття/розділення. Нумеровані знахідки простими словами, кожна з конкретним випадком поломки; далі — `/decompose` для обраних. |
-| [`/architect`](skills/architect/SKILL.md) | `Zero-Write Architect` | Аналіз і проєктування архітектури репо, пакета чи нової фічі: карта модулів і напрямку залежностей, цикли, діряві межі, god-модулі, структура папок, що заважає змінам, рішення про винесення в окремий модуль/пакет/бібліотеку/сервіс (найнижчий рівень, що вирішує задачу). Розширюваність перевіряє на конкретних сценаріях наступних змін, без спекулятивних абстракцій. Видає цільову структуру з правилами залежностей і покрокову неруйнівну дорожню карту; обрані кроки `/decompose` зберігає в `.temp/arch-<area>/tasks.md`, щоб карта пережила сесію. |
-
----
-
-## Організація робочого простору у ваших проєктах
+## Робочий простір у проєкті
 
 ```text
 <project-root>/
-├── .gitignore                   # Автоматично містить: .temp/
-├── .temp/                       # Ізольований локальний scratchpad (не світиться в git status)
-│   └── <feature-topic>/
-│       ├── proposal.md          # Опис змін і стратегія Expand-Contract vs In-Place (/proposal, опціонально)
-│       ├── tasks.md             # Первинна декомпозиція з шапкою Context & Intent (/decompose)
-│       ├── review-1-tasks.md    # Задачі за результатами рев'ю (/decompose після /review)
-│       └── subtasks-1.md        # Опціональне дроблення окремої задачі (/decompose)
-├── docs/
-│   └── specifications/          # СПРАВЖНІ нормативні специфікації системи (/spec)
-└── src/                         # Вихідний код та тести (/implement)
+├── .gitignore                 # містить .temp/
+├── .temp/<topic>/             # чернетки, не потрапляють у git
+│   ├── flow.md                # стан прогону /pas:flow (маршрут, етап, рішення, журнал)
+│   ├── proposal.md            # дизайн великої задачі (/pas:proposal)
+│   ├── tasks.md               # файл задач із шапкою Context & Intent
+│   ├── review-1.md            # вердикт і нумеровані знахідки рев'ю
+│   ├── review-1-tasks.md      # задачі зі знахідок рев'ю
+│   └── subtasks-3.md          # розбиття задачі 3
+└── docs/specifications/       # нормативні специфікації поточного стану (/pas:spec)
 ```
 
-**Git worktree**: `.temp/` ігнорується git'ом, тому у worktree його немає. Джерело правди — `.temp/<topic>/` основного checkout'у. Субагенти у worktree отримують текст задачі в промпті й не торкаються `.temp/`. Сесія, що сама працює у worktree, один раз копіює папку теми в `.temp/` worktree і пише лише туди — ніколи в основний checkout за абсолютним шляхом.
+У git worktree `.temp/` немає: джерело правди — `.temp/<topic>/` основного checkout'у; субагенти у worktree отримують текст задачі в промпті.
 
 ---
 
-## Структура самого репозиторію `agent-skills`
+## Структура репозиторію
 
-* `skills/<name>/SKILL.md` — **єдине канонічне джерело правди** для `npx skills`, `agy plugin install`, `gemini skills install` та скриптів `install.ps1` / `install.sh`.
-* `skills/<name>/evals/` — тестові випадки скіла (запит, тестовий проєкт, перевірки) у форматі `claude plugin eval`; інсталятори їх не копіюють і не враховують у хеші.
-* `.agents/skills` — Directory Junction (Windows) / Symlink (Linux/macOS), який прямо вказує на `skills/` (створюється через `.\install.ps1 -SyncRepo` або `./install.sh --sync-repo`), тому редагування у будь-якій папці змінює один і той самий файл без ризику розсинхрону.
-* `plugin.json` — кореневий маніфест плагіна для Antigravity.
-* `install.ps1` / `install.sh` — скрипти швидкого локального та глобального встановлення.
+* `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` — плагін `pas` і marketplace `letale-skills`.
+* `skills/`, `agents/`, `shared/`, `hooks/` + `scripts/` — вміст плагіна.
+* `skills/<name>/evals/` — тестові випадки у форматі `claude plugin eval`; інсталятори їх не копіюють.
+* `docs/specifications/skill-chain-architecture.md` — контракти між частинами плагіна.
+* `install.ps1` / `install.sh` — встановлення для Codex та інших агентів.

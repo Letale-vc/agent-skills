@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: medium-goal-writes-task-file
+expected_outcome: |
+  /pas:flow takes the three-part goal inside one package on the medium route: the main session writes .temp/coupons/tasks.md itself (Context & Intent header, scored tasks, no proposal.md, no decomposer), keeps .temp/coupons/flow.md as a thin log with Route medium and no checkboxes, hands each task to a pas:implementer subagent, runs the tests, spawns one pas:reviewer, and stops at a gate without committing.
+context:
+  scaffold_script: place-files.sh

@@ -1,0 +1,11 @@
+{
+  "name": "pas",
+  "displayName": "Practical Agent Skills",
+  "description": "Engineering pipeline for coding agents that routes work by size: small fixes go straight to a TDD implementer, medium work gets a task file, implementation and one review, large work runs proposal, breakdown, implementation batches, parallel reviews and specs. Resumable state in .temp/<topic>/, explicit gates only at commits, design choices, review findings and manual checks, and git safety hooks.",
+  "author": {
+    "name": "Letale-vc"
+  },
+  "homepage": "https://github.com/Letale-vc/agent-skills",
+  "repository": "https://github.com/Letale-vc/agent-skills",
+  "keywords": ["workflow", "tdd", "code-review", "planning", "subagents"]
+}

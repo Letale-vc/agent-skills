@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: status-reports-next-step
+expected_outcome: |
+  /pas:flow with no argument answers a status question: it lists the topic demo with its task count and the Stage and Next from flow.md, recommends /pas:flow demo as the one next step, and stops without reviewing, editing or committing anything.
+context:
+  scaffold_script: place-files.sh
