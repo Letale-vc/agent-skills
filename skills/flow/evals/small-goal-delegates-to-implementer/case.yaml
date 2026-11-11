@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: small-goal-delegates-to-implementer
+expected_outcome: |
+  /pas:flow takes the one-task goal on the small route: it announces the route, creates a feat/ branch from the default branch before the implementer runs, writes no .temp/ topic (no tasks.md, no flow.md, no proposal.md), hands the task written out in the prompt to a pas:implementer subagent whose report shows the tests green (the main session reads that output instead of re-running the tests), runs no review, and SAVE20 works with the tests green and nothing committed.
+context:
+  scaffold_script: place-files.sh

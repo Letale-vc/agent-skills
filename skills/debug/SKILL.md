@@ -1,78 +1,58 @@
 ---
 name: debug
-description: Guides systematic root-cause debugging (Reproduce -> Localize -> Root Cause Hypothesis -> Fix & Guard). Use when tests fail or are flaky, builds break, the app crashes or gives wrong output, something that used to work stopped working, or via /debug.
+description: Systematic root-cause debugging - Reproduce -> Localize -> Root cause -> Fix & guard with a regression test, fixing the cause once in a shared place instead of patching symptoms. Use when tests fail or are flaky, a build breaks, the app crashes or gives wrong output, something that used to work stopped working, when the full check is red after a batch, or via /pas:debug.
+argument-hint: "[failing test, command or symptom]"
 ---
 
-# Debug (`/debug`)
+# Debug
 
-## 1. Role & Permissions (Systematic Root-Cause Debugger)
+Mode: **writes code** (`${CLAUDE_PLUGIN_ROOT}/shared/rules.md` §1), but only after the root cause is found. No shotgun edits hoping the failure goes away, no unrelated work past a red build, no scratch files outside `.temp/`. Searches across the codebase go to `pas:scout` (rules §8).
 
-- **MODE**: **Diagnostic & Scoped Bugfix Writer**.
-- **ALLOWED ACTIONS**:
-  - Reading code, logs, stack traces, and running targeted reproduction/test commands.
-  - Applying a minimal root-cause fix + regression test **after** the root cause is identified and the resolution path is confirmed.
-- **FORBIDDEN ACTIONS**:
-  - **NEVER guess blindly or apply "shotgun" edits** hoping a failure goes away.
-  - **NEVER push past a failing test or broken build** to add unrelated features.
-  - NEVER create temporary debug files in the project root (if scratch files are needed, use `.temp/`).
-- **LANGUAGE RULE**: Always communicate with the user in the user's conversation language.
+Run from `/pas:implement` or `/pas:flow` (a red full check or a bug goal), the main session does not debug inline: investigation (searches, localizing, sibling copies) goes to `pas:scout`, and the fix to one `pas:implementer` in debug mode (opus `high`), which gets the failure output and the scout's findings and returns the diagnosis and fix in its report. Flow's no-code-edit rule holds here and overrides any project allowance to edit one or two files.
 
----
+## 1. Reproduce
 
-## 2. The Stop-the-Line Triage Process
+* Make the failure happen on demand: the failing test, the build command, or the exact input and state. Keep the exact error, stack trace or failing assertion.
+* **Flaky or intermittent**: do not guess. Check the usual sources of non-determinism: unawaited async work and races, state shared between tests, test order, clock and time zone, leaked resources. Run the test repeatedly and in isolation. Still not reproducible → go on with a hypothesis below 80% confidence (§4).
 
-Work through Steps 1–3 before proposing or writing any fix:
+## 2. Localize
 
-### Step 1: Reproduce (Deterministic or Flaky/Intermittent)
+* Narrow it to the layer, module, file and line range where actual and expected behavior diverge.
+* A regression ("worked yesterday") → `git log` / `git diff` of the recent changes in that area; `git bisect` when the window is wide.
+* **Sibling copies**: search for other code with the same logic (same algorithm, data or paths, sibling classes). The bug often lives in every copy, or exists because the copies diverged.
 
-- Make the failure happen reliably (run the specific failing test, build command, or trace the exact input/state that triggers the bug).
-- Preserve the exact error message, stack trace, or failing assertion.
-- **If the bug does NOT reproduce deterministically (Flaky / Intermittent / Heisenbug)**:
-  - Do **NOT** guess or apply blind fixes.
-  - Inspect common non-determinism sources: race conditions / unawaited async calls, shared mutable state across tests, test execution order, clock/timezone assumptions, or resource leaks.
-  - Try running the test in stress/repeat mode or isolation; if it still cannot be triggered reliably, formulate your best hypothesis in Step 3 with `<80%` confidence and recommend **Option 3 (Targeted Diagnostic Instrumentation)** to capture runtime state on the next occurrence.
+## 3. Root cause
 
-### Step 2: Localize
-
-- Narrow down the exact layer, module, file, and line range where actual behavior diverges from expected behavior.
-- Check recent changes (`git diff` / `git log -n 5`) if this is a regression ("worked yesterday, broke today").
-- **Sibling copies**: search for other code that implements the same logic (same algorithm, same data/paths, sibling classes). The bug often lives in every copy, or exists because copies diverged. Note them in the diagnosis.
-
-### Step 3: Formulate Root Cause Hypothesis
-
-Present your diagnosis clearly in chat before touching production code:
+Before touching production code, post the diagnosis:
 
 ```markdown
 ## Bug Diagnosis
-- **Symptom**: <What is failing>
-- **Location**: `<file_path#Lxx>`
-- **Root Cause Hypothesis**: <Why it is failing, backed by concrete evidence from code/logs>
-- **Sibling copies**: <`path:line` of code with the same logic (same bug?), or "none found">
-- **Confidence**: ~X%
+- **Symptom**: <what fails, the exact error>
+- **Location**: `path:line`
+- **Root cause**: <why, with evidence from code, logs or a run>
+- **Sibling copies**: <`path:line` of the same logic, or "none found">
+- **Confidence**: ~N%
 ```
 
-Fix the root cause **once, in a shared place**: if the fix needs logic that already exists elsewhere, reuse it; if the same logic lives in several copies, extract it and fix it there rather than patching each copy or adding one more (`/using-agent-skills`, behavior 6). If that extraction is large or crosses modules, take the architectural route below.
+Fix the cause **once, in a shared place** (rules §7): reuse logic that already exists; when several copies hold the bug, extract them into one and fix it there instead of patching each.
 
----
+## 4. Route and fix
 
-## 3. Resolution Route (Default-Proceed)
+Pick the route from the diagnosis and announce it in one line (the user can override):
 
-Once the root cause is identified, pick the route from the diagnosis and announce it in one line (the user can override):
+* **Confidence ≥ 80%, local cause** → fix now:
+  1. write or extend a regression test (prefer a new case in the closest existing test) and see it fail;
+  2. apply the minimal fix and see it pass;
+  3. run the project's check command for the touched area, green with no regressions.
+* **Confidence < 80%** → add targeted diagnostic logging or instrumentation that captures the missing state. If only the user can reproduce it (the app, a device, a UI), give a short numbered checklist and end the turn (gate 4).
+* **The cause is a design flaw** (a broken public contract, the same rule spread across modules, wrong module boundaries) → gate 2: recommend `/pas:flow <goal>` for a multi-step fix, or `/pas:audit structure` when the flaw is in the structure itself; one short question, end the turn.
 
-- **Localized, well-understood bug (confidence `≥80%`)** → fix the root cause right now and add/update a **regression test** that fails without the fix and passes with it.
-- **Confidence `<80%`, more runtime evidence needed** → add targeted diagnostic instrumentation/logging first. If reproducing needs the user (running the app, a device, a game), give them a short numbered checklist in their language and **STOP YOUR TURN**.
-- **The bug exposes a deeper architectural flaw or a breaking API issue** → this is a decision gate: recommend `/proposal` or `/decompose` for a safe multi-step fix (e.g., in `.temp/<topic>/`) instead of patching a symptom — or `/architect` when the flaw is in the structure itself (module boundaries, dependency direction, the same rule spread across modules) rather than in one contract — ask one short question, and **STOP YOUR TURN**.
+Circuit breaker: the same failure after 3 fix attempts → stop and report the diagnosis, what was tried and the output (gate 5).
 
-If the user asks about pros/cons or details of the diagnosis, answer and restate the pending route in one line.
+## 5. Handoff
 
----
+Announce the next step in one line:
 
-## 4. Fix Verification & Forward Handoff
-
-When fixing directly:
-
-1. Write/update the regression test → apply the minimal fix → run the test suite to verify 100% green status. Prefer adding a case to the closest existing test of that unit over a new test method or file.
-2. Next step, announced in one line:
-   - **The bug occurred mid-task in `.temp/<topic>/`** → return to `/implement` and continue the active task file.
-   - **The fix touches more than one module or a public contract** → proceed to `/review` (zero-write, safe).
-   - **Otherwise** → recommend `/git` for a clean `fix:` commit and **STOP YOUR TURN** (committing needs confirmation).
+* the bug came up mid-batch in `.temp/<topic>/` → back to `/pas:implement` on the active task file;
+* the fix touched more than one module or a public contract → `/pas:review`;
+* otherwise → `/pas:git` for a `fix:` commit (it asks before committing).

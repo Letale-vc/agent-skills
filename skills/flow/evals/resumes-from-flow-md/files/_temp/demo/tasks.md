@@ -5,7 +5,7 @@
 - **Constraints**: `shop/pricing` → nothing.
 
 - [x] **Task 1: Export apply_discount from shop.pricing**
-  - **Model**: standard
+  - **Model**: standard (D0 V0 S0)
   - **Target files**: `shop/pricing/__init__.py`, `tests/test_pricing.py`
   - **Context**: `shop/pricing/discounts.py:1` defines `apply_discount`.
   - **Reuse**: re-export `apply_discount` from `shop/pricing/discounts.py`.

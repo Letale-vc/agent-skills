@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: resumes-from-flow-md
 expected_outcome: |
-  /flow resumes topic demo at the review stage written in .temp/demo/flow.md: it reviews the finished task without re-implementing it, records the review in flow.md, and stops at the next gate without committing.
+  /pas:flow resumes the medium-route topic demo at the review stage written in .temp/demo/flow.md: it reviews the finished task without re-implementing it, takes over after the Handoff line without asking, records the review in flow.md, skips the spec (the project has no docs/specifications/), and stops at the next gate without committing.
 context:
   scaffold_script: place-files.sh

@@ -5,7 +5,7 @@ timeout_seconds: 900
 allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash]
 ---
 
-Звіт /architect (скорочено):
+Звіт /pas:audit structure (скорочено):
 
 Знахідки:
 1. Domain імпортує UI: `shop/domain/order.py` → `shop/ui/formatting.py`.
@@ -16,8 +16,8 @@ allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash]
 Дорожня карта:
 1. Перенести правила знижок у `shop/pricing/discounts.py` і викликати їх з `cart_view` та `orders` (закриває 2; S; маршрут `tasks`; правильна поведінка — round до 2 знаків і поріг > 100).
 2. Прибрати імпорт UI з domain: `Order.describe` переїжджає в `shop/ui` (закриває 1; S; маршрут `tasks`).
-3. Винести `shop/pricing` в окремий пакет для мобільного клієнта (L; маршрут `/proposal` — відкрите рішення: workspace-пакет чи опублікована бібліотека).
+3. Винести `shop/pricing` в окремий пакет для мобільного клієнта (L; маршрут `/pas:proposal` — відкрите рішення: workspace-пакет чи опублікована бібліотека).
 
-Беремо кроки 1–3. /decompose
+Беремо кроки 1–3. /pas:decompose
 
 Input files: README.md, shop/domain/order.py, shop/ui/cart_view.py, shop/ui/formatting.py, shop/api/orders.py

@@ -1,96 +1,85 @@
 ---
 name: audit
-description: Zero-write quality audit of a whole repo or a named folder/package - bugs, security and data-loss risks, what breaks under the real load, risky code without tests, slow paths, duplication and code to delete, merge or split. Ranked, numbered findings in plain words, each with a concrete failure case. Changes nothing. Use for "audit the repo", "review the whole codebase", "find bloat", "what can I delete", or via /audit.
+description: Zero-write audit of a whole repo or a named folder or package, in two modes. Code mode finds bugs, security and data-loss risks, what breaks under the real load, risky code without tests, slow paths, duplication and code to delete, merge or split. Structure mode maps modules and dependency direction, finds cycles, leaky boundaries and layouts that fight how the code changes, decides what should become a separate module, package, library or service, and designs a target structure with a non-breaking roadmap. Ranked, numbered findings in plain words, each with a concrete failure case; changes nothing. Use for "audit the repo", "review the whole codebase", "find bloat", "what can I delete", "review the architecture", "how should I structure the project", "should this be a separate library", "where should new code live", or via /pas:audit.
+argument-hint: "[code|structure] [path]"
 ---
 
-# Audit (`/audit`)
+# Audit (`/pas:audit [code|structure] [path]`)
 
-## 1. Role & Permissions (Zero-Write Repo Auditor)
+Mode: **read-only** ([rules.md](${CLAUDE_PLUGIN_ROOT}/shared/rules.md) §1), `.temp/` included: persisting the chosen findings is `/pas:decompose`'s job. Judge the code as the senior developer who just inherited it and is woken up when it breaks.
 
-- **MODE**: **100% Zero-Write** on source, tracked, `docs/` and `.temp/` files. Audit the code as the senior developer who just inherited it and gets woken up when it breaks.
-- **ALLOWED**: reading files, `git log` / `git diff` / `git blame`, and running the project's build, tests, typecheck or linters in check-only mode to back findings with facts (ephemeral build/test caches such as `bin/`, `obj/`, `__pycache__/` are fine).
-- **FORBIDDEN ACTIONS**:
-  - NEVER create, edit, format or delete any file, including `.temp/` task files (that is `/decompose`'s job).
-  - NEVER run commands that mutate the tree or install packages (`--fix`, `--write`, `-u`, `git checkout`, `npm install`).
-- **LANGUAGE RULE**: Always communicate with the user and write the whole report in the user's conversation language.
+* `/pas:review` checks one change against its `.temp/<topic>/` plan; `/pas:audit` judges existing code with no plan.
+* `/pas:proposal` (with `pas:architect` variants) designs one planned change; structure mode decides which structural changes are worth making and in what order.
 
-**Difference from `/review`**: `/review` checks one change against its `.temp/<topic>/` plan. `/audit` judges existing code with no plan, across a folder, package or the whole repo. Module boundaries, folder layout and extraction into libraries are `/architect`'s job.
+## 1. Pick the mode
 
----
+* **code** (default): what is wrong inside the code.
+* **structure**: its shape: modules, boundaries, dependency direction, layout, extraction. Taken when the first argument is `structure` or the request is about architecture, layout, extraction or where code should live. Read [structure.md](structure.md) now and follow it in place of §3–§5 below.
+* A request for both → code mode first; offer structure mode in the closing question.
 
-## 2. Map Before Judging
+## 2. Map before judging
 
-1. **Scope**: what the user named (folder, package, project); nothing named → the whole repo.
-2. **Project rules first**: read `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md` and `docs/specifications/`. A broken project rule or spec invariant is a finding; a documented, deliberate choice is not.
-3. **Read the skeleton**: README, build/deploy config, dependency manifests, entry points (main, handlers, jobs, plugins, CLI commands) and the tests.
-4. **Pin the expected load** and judge scale against it, saying which you assumed: one person running a script, an app with per-frame or per-tick hot paths (overlays, games, real-time readers), or many users/processes at once.
-5. **Trace the main flows end to end**: where data comes in, what is stored, what goes out. Read fully the paths where a mistake costs the most: external/user input, auth, money, data writes, process or memory access, background threads, anything shared between threads or processes.
-6. **Large repo**: go deep where mistakes are expensive, not file by file, and record what you skipped. Follow the Context Hygiene rule of `/using-agent-skills` (headings first, sections by offset, no re-reads).
+1. **Scope**: the path in the arguments or named by the user; none → the whole repo.
+2. **Project rules first**: `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `docs/specifications/`, ADRs. A broken project rule or spec invariant is a finding; a documented, deliberate choice is not, unless its stated reason no longer holds (say which reason broke).
+3. **Skeleton**: README, build and deploy config, dependency manifests, entry points (main, handlers, jobs, plugins, CLI commands), the tests.
+4. **Expected load**, stated in the report: one person running a script, an app with per-frame or per-tick hot paths, or many users or processes at once. Scale is judged against it.
+5. **Main flows end to end**: where data comes in, what is stored, what goes out. Read fully the paths where a mistake costs most: external input, auth, money, data writes, process or memory access, background threads, state shared between threads or processes.
+6. **Large repo**: go deep where mistakes are expensive, not file by file. Fan independent questions (one per module or flow) out to `pas:scout` in parallel; read the expensive paths yourself. Record what you skipped.
 
----
+## 3. What to look for (code mode)
 
-## 3. What to Look For (Priority Order)
+Correct → safe → holds under the real load → tested → fast → lean. Lean counts: every extra line is read, tested and fixed later.
 
-Correct → safe → holds under the real load → tested → fast → lean. Lean still counts: every extra line is read, tested and fixed later.
+1. **Bug**: wrong result, crash, missed edge case (empty, zero, last item, rounding, time zones, null or invalid handle), callers that disagree with what a function returns, the same rule implemented differently in two places.
+2. **Risk**: security holes (injection, weak randomness, secrets in code, unchecked external input), data loss (swallowed errors, writes in the wrong order, no atomic write or transaction), resources never released.
+3. **Scale**: fine once, wrong under the real load: check-then-act races, unsynchronized shared state, work repeated by every thread, process or frame, caches or lists that only grow, a call or query per item, O(n²) on big input, allocations in a hot loop.
+4. **Missing test**: risky logic (a branch, a parser, layout or offset math, money, security, data writes) with no test that fails when it breaks. Ask for one good test, not coverage.
+5. **Speed**: real slowdowns are problems; small wins in a hot loop are suggestions. For per-frame code the frame budget matters.
+6. **Lean**: code that should not exist or should be smaller:
+   * **delete**: dead code, unused options, flags and config, speculative features;
+   * **reuse**: a re-implementation of an existing helper (name the path to keep);
+   * **merge**: near-copies that must change together, especially copies that already diverged (different limits, guards, checks): say which one looks correct;
+   * **stdlib / platform**: the standard library or platform already does it; a dependency doing what a few lines can do;
+   * **yagni**: an interface with one implementation, a factory with one product, a wrapper that only forwards calls;
+   * **split**: one function or class doing unrelated jobs. Split by job, never by line count, never into helpers that exist only to shorten a function.
 
-1. **Bug**: wrong result, crash, missed edge case (empty, zero, last item, rounding, time zones, null/invalid handle), callers that disagree with what a function returns, the same rule implemented differently in two places.
-2. **Risk**: security holes (injection, weak randomness, secrets in code, unchecked external input), data loss (swallowed errors, writes in the wrong order, no atomic write/transaction), resources never released.
-3. **Scale**: fine once, wrong under the real load: check-then-act races, unsynchronized shared state, work repeated by every thread/process/frame, caches or lists that only grow, a call or query per item, O(n²) on big input, allocations in a hot loop.
-4. **Missing test**: risky logic (a branch, a parser, layout/offset math, money, security, data writes) with no test that fails when it breaks. Ask for one good test, not coverage.
-5. **Speed**: real slowdowns are problems; small wins (repeated work in a hot loop) are suggestions. For per-frame code, the frame budget matters.
-6. **Lean**: code that should not exist or should be smaller (`/using-agent-skills`, behavior 6):
-   - **delete**: dead code, unused options, flags and config, speculative features;
-   - **reuse**: something re-implemented that an existing helper already covers (name the path to keep);
-   - **merge**: near-copies that must change together, especially copies that already diverged (different limits, guards, checks) — say which one looks correct;
-   - **stdlib / platform**: the standard library or platform already does it; a dependency doing what a few lines can do;
-   - **yagni**: interface with one implementation, factory with one product, wrapper that only forwards calls;
-   - **split**: one function or class doing several unrelated jobs. Split by job, never by line count, and never into helpers that exist only to shorten a function.
+## 4. Verify before you report
 
----
+* Every finding needs a **concrete case**: "this input or situation → this wrong result". No case, no finding.
+* Before calling code unused, search the whole tree: tests, fixtures, config, reflection, string and dynamic references, plugin loading.
+* A shortcut whose comment names its limit (`shortcut:`, `TODO(limit):`) is a decision, not a finding, unless the expected load already crosses that limit.
+* Back findings with facts where cheap: the project's build, tests, typecheck or linters in check-only mode, `git log` / `git blame`.
+* Propose the **smallest fix that works**, preferring fixes that delete code; never a layer, framework or config the problem does not need. No style taste, no "consider…", no vague worries.
 
-## 4. Verify Before You Report
+## 5. Report
 
-- Every finding needs a **concrete case**: "this input/situation → this wrong result". No case, no finding.
-- Before calling code unused, search the whole tree for it: tests, fixtures, config, reflection, string and dynamic references, plugin loading.
-- A shortcut documented in a comment that names its limit (e.g., `shortcut:` / `TODO(limit):`) is a decision, not a finding — unless the expected load already crosses that limit.
-- Propose the **smallest fix that works**; prefer fixes that delete code. Never add layers, frameworks or config the problem does not need.
-- No style taste, no "consider…", no vague worries.
+Plain, short sentences in everyday words; explain a technical term the first time it appears; assume the reader has never seen this code.
 
----
-
-## 5. Report Format
-
-Plain, short sentences in everyday words. Explain a technical term the first time it appears; assume the reader has never seen this code.
-
-1. Start with **What this repo does:** in two or three sentences, plus the load you assumed.
-2. Findings in three groups, most important first (skip empty groups):
-   - **Must fix**: bug, security, data loss, breaks at the expected load.
-   - **Should fix**: risky code without a test, real slowness, duplication, a function mixing jobs, code that should not exist.
-   - **Nice to have**: small speed-ups, shorter forms.
-3. Number findings **across all groups** so the user can say "fix 2 and 5". At most 20; if you left smaller ones out, say how many.
-4. Every finding has all four parts, one or two short sentences each:
+1. **What this repo does:** two or three sentences, plus the load you assumed.
+2. Findings in groups, most important first, empty groups skipped:
+   * **Must fix**: bug, security, data loss, breaks at the expected load.
+   * **Should fix**: risky code without a test, real slowness, duplication, a function mixing jobs, code that should not exist.
+   * **Nice to have**: small speed-ups, shorter forms.
+3. Number findings **across all groups** so the user can say "fix 2 and 5"; at most 20, and say how many smaller ones you left out.
+4. Each finding has four parts, one or two short sentences each:
 
    ```markdown
-   2. **Two copies of the retry rule disagree** (`src/Sync/Upload.cs:L40-52`, `src/Sync/Download.cs:L88-97`)
+   2. **Two copies of the retry rule disagree** (`src/sync/upload.ts:40-52`, `src/sync/download.ts:88-97`)
       - **What this is:** Uploads and downloads retry a failed request a few times before giving up.
       - **Problem:** Upload waits 1 s between tries, download retries instantly 10 times. When the server is down, download floods it and fails in under a second.
-      - **Fix:** Keep one `RetryPolicy` helper with the upload behavior and call it from both places; delete the download copy.
+      - **Fix:** Keep one `retryPolicy` helper with the upload behavior, call it from both places, delete the download copy.
       - **If we skip it:** Every outage turns into a burst of requests, and the next fix to one copy misses the other.
    ```
 
-5. End with:
-   - **Verdict:** one line — healthy, or what to fix first.
-   - **Lean:** `-<N> lines, -<M> dependencies possible.` when lean findings exist.
-   - **Not checked:** parts you did not read or could not run, and why.
+5. End with **Verdict:** (one line: healthy, or what to fix first), **Lean:** `-<N> lines, -<M> dependencies possible.` when lean findings exist, and **Not checked:** what you did not read or could not run, and why.
 
 Nothing found: **What this repo does:**, then `Healthy. Nothing to fix.` and one line on what you checked.
 
----
+## 6. Handoff
 
-## 6. Forward Handoff & Terminal Turn Rule (CRITICAL)
+The report is the deliverable and lives only in this chat, so the chosen findings must reach a file before the session ends. Choosing them is gate 3 ([rules.md](${CLAUDE_PLUGIN_ROOT}/shared/rules.md) §5). Ask one short question, recommended answer first:
 
-The report is the deliverable; change no code in this turn. This is a gate (the user decides which findings to fix). Ask one short question in the user's language, recommended answer first:
+* code mode: take Must fix (1–N) → `/pas:decompose` into `.temp/audit-<area>/tasks.md`; alternatives: name the finding numbers, or fix a trivial one-liner straight away with `/pas:implement`;
+* structure mode: the closing question in [structure.md](structure.md) §6.
 
-- *"Які знахідки беремо? Рекомендую Must fix (1–N) → `/decompose` у `.temp/audit-<area>/tasks.md`."* — alternatives: name the finding numbers, or fix a trivial one-liner directly via `/implement`.
-
-**STOP YOUR TURN IMMEDIATELY** — even in Autopilot. In a delegated (subagent) run, return the report only.
+Then stop the turn, even inside `/pas:flow`. In a subagent run, return the report only.

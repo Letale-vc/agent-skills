@@ -1,0 +1,16 @@
+{
+  "name": "letale-skills",
+  "owner": {
+    "name": "Letale-vc"
+  },
+  "metadata": {
+    "description": "Practical Agent Skills by Letale-vc"
+  },
+  "plugins": [
+    {
+      "name": "pas",
+      "source": "./",
+      "description": "Size-routed engineering pipeline: shape, proposal, decompose, TDD implement, review, spec, git, audit."
+    }
+  ]
+}

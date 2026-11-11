@@ -1,107 +1,93 @@
 ---
 name: proposal
-description: Creates a technical Change Proposal (RFC) in .temp/<topic>/proposal.md, recording the goal, success criteria and scope, analyzing codebase/specification conflicts, library versions, and recommending an integration strategy (Expand-Contract vs In-Place). Use when designing architectural changes, modifying public APIs/contracts, or via /proposal.
+description: Writes the design for large work into .temp/<topic>/proposal.md - goal and success criteria, conflicts with existing code, specifications and library versions, where the new code lives, reuse - then spawns 2–3 pas:architect agents in parallel (minimal, clean, pragmatic), compares their variants in one table with a recommendation, and records the variant and integration strategy (Expand-Contract or In-Place) the user picks. Use for large work - a new public contract, module, project or layer, or a change across layers - when /pas:flow reaches the proposal stage, when a task's Design line names a topic, or via /pas:proposal.
+argument-hint: "[topic]"
 ---
 
-# Proposal (`/proposal`)
+# Proposal
 
-## 1. Role & Permissions (Scoped RFC Writer)
+**Mode**: writes `.temp/` (`proposal.md` only). No production code in it: contracts, signatures, short pseudo-code or diagrams at most.
 
-- **MODE**: **Scoped Writer**.
-- **ALLOWED WRITES**:
-  - `.temp/<topic>/proposal.md`
-  - `.gitignore` (only to ensure `.temp/` is ignored)
-- **FORBIDDEN ACTIONS**:
-  - NEVER modify files in `src/`, tests, or `docs/specifications/`.
-  - NEVER write full low-level production code in `proposal.md` (only architectural contracts, signatures, diagrams, or short pseudo-code snippets are allowed).
-- **LANGUAGE RULE**: Always communicate with the user and write `.temp/<topic>/proposal.md` in the user's conversation language.
+Read `${CLAUDE_PLUGIN_ROOT}/shared/rules.md` first (topics, `.gitignore` guard, gates, reuse, context hygiene).
 
----
+Small and medium work needs no proposal: say so in one line and hand the goal to `/pas:flow`, unless the user insists.
 
-## 2. Topic Resolution & `.gitignore` Guard
+## 1. Intent
 
-1. Check `.gitignore` in the project root. If no existing line already ignores it (`.temp`, `.temp/`, `/.temp/`, ignoring trailing whitespace or `\r`), append `.temp/` once; never add a duplicate entry.
-2. Inspect `.temp/`:
-   - If **1 topic folder** exists or the topic is obvious from the chat, select it automatically and output: `Active topic: .temp/<topic>/`.
-   - If **2+ topic folders** exist and the target topic is ambiguous, list them and ask the user which topic to work on.
+Resolve the topic (rules.md §3) and find Section 1 of the proposal, in this order:
 
----
+1. A confirmed intent block from `/pas:shape` in the chat → use it as is.
+2. A task in another topic whose `**Design**:` line names this topic → that task and its file's `## Context & Intent` header are the intent; its `Constraints` are binding (the structure was decided there).
+3. Goal, criteria and scope clear from the chat → write them down and say so in one line.
+4. Still vague → run `/pas:shape` first, then return here.
 
-## 3. Prerequisite Advisor (Default-Proceed)
+## 2. Context
 
-Section 1 of `proposal.md` is the topic's statement of intent (goal, success criteria, scope), so find where it comes from:
+Spawn `pas:scout` in parallel, one narrow question each, with the names and paths from the intent:
 
-- **A confirmed restatement from `/interview` or a Crystallized Idea from `/idea` is in the chat** → it becomes Section 1; proceed to Section 4.
-- **If another task file's `**Design**:` line names this topic** (search `.temp/` for the topic name; typically an `/architect` roadmap step): that task and its file's `## Context & Intent` header are the intent — read them and proceed to Section 4. The structure was already decided there, so its `Constraints` are binding and the Structure Fit gate (Section 4) does not send you back to `/architect`.
-- **Otherwise**, do not hard-block:
-  - **Goal and scope are clear from the chat** → create `proposal.md` from the current context right away, announcing it in one line.
-  - **Requirements or boundaries are still vague** → run `/interview` first (it is read-only and asks its own questions), then return here.
-  - The user can override either choice; if they ask about pros/cons, answer and restate the pending choice in one line.
+* the code the change touches: entry points, public types and their callers;
+* `docs/specifications/` invariants and dependency rules the change must keep;
+* existing code that already does the same or nearly the same (rules.md §7);
+* the exact versions of the libraries the design relies on, from the project manifest. Check their behavior in official documentation or existing project code, not from memory.
 
----
+## 3. Draft Sections 1–4
 
-## 4. Conflict Analysis & Migration Strategy (CRITICAL)
+Write `proposal.md` with the template in §6 up to Section 4:
 
-Before finalizing `.temp/<topic>/proposal.md`:
+* **Conflicts**: every place where the intent disagrees with the code, a spec or a library version, with `path:line`. A conflict only the user can settle is gate 2: ask before spawning architects.
+* **Placement**: where each new piece lives, by the project's layout rules and current dependency direction. A new module or package, an extraction, or a dependency arrow pointing the wrong way means the structure itself is open: recommend `/pas:audit structure` first (gate 2), or continue inside the current structure if the user prefers.
+* **Reuse**: per new piece, `reuse path:line`, `extract <Name> from path:line + path:line` (note divergences), or `new (searched: <terms>)`.
 
-1. **Inspect existing codebase, dependency versions & `docs/specifications/`**:
-   - Check if the proposed change modifies or conflicts with existing functions, classes, public APIs, or normative specs in `docs/specifications/`.
-   - **Source-Driven Verification**: When proposing changes that depend on external frameworks or libraries, check the exact version in the project manifest (`package.json`, `.csproj`, `Cargo.toml`, `pyproject.toml`, `go.mod`) and verify against official documentation or existing project patterns instead of relying on stale training memory.
-2. **Reuse & Generalization Scan** (`/using-agent-skills`, behavior 6): for every new component, helper, or algorithm in the design, search for existing code that already does the same or nearly the same (same domain names, data, algorithm, sibling classes). For each hit decide: **reuse as-is**, **generalize/extract first** (name the shared helper and which existing copies switch to it; flag copies that already diverged), or **new** (nothing similar found). Generalization that touches other modules or contracts is part of the design, not an afterthought — put it into the strategy below.
-3. **Structure Fit**: check the design against the current module boundaries and dependency direction, plus any dependency rules in `docs/specifications/` or in an `/architect` report in this chat (those rules are constraints, not suggestions). If the change needs a new module or package, an extraction, or a dependency arrow pointing the wrong way, the structure itself is in question and a single RFC would lock in a local answer to it: this is a decision gate — recommend `/architect` (Evolve mode, with this change as the scenario) first, or continue within the current structure if the user prefers.
-4. **If a conflict or breaking change is possible, present an Integration Strategy choice** (or embed the confirmed choice if obvious, highlighting your recommendation):
-   - **Strategy A — Parallel Implementation (Expand-Contract)**:
-     - Create a new function/method/class alongside the existing implementation so current callers and tests never break during development.
-     - Switch callers over only after the new implementation is 100% complete and tested.
-     - Explicitly decide what happens to the old implementation: **Deprecate** (keep with deprecation notice) or **Remove** (delete once all callers are migrated).
-   - **Strategy B — Direct In-Place Replacement**:
-     - Modify the existing implementation directly (only recommended when the scope is small, internal, and non-breaking).
-   - *Note*: This decision directly determines whether and how `docs/specifications/` will need to be updated at the end of the cycle.
+## 4. Variants
 
----
+1. Spawn `pas:architect` agents in parallel, one per lens: **minimal** (smallest change, maximum reuse), **clean** (the boundaries the next extensions want), **pragmatic** (the balance). Use two when minimal and pragmatic would coincide. Each gets Sections 1–4, the scout conclusions and its lens, never this session's reasoning.
+2. Check each report against the conflicts and placement rules; a variant that breaks a binding constraint is dropped with one line of reason.
+3. Write Section 5: one comparison table and a recommendation with its reasons.
+4. **Gate 2**: ask which variant to take, recommended first. In a `/pas:flow` run this is the only stop of the stage.
 
-## 5. Artifact Structure (`.temp/<topic>/proposal.md`)
+## 5. Record the choice
 
-Write `.temp/<topic>/proposal.md` with the following sections:
+1. Write Section 6 from the chosen variant: strategy and old-code policy, contracts and boundaries, spec impact, risks. Set `Status` to the choice and the date.
+2. Shrink the other variants in Section 5 to one line each; the table may stay.
+3. Check the size (`wc -l`): target ≤ 150 lines, hard cap 300. Over the cap, the topic is too big: split it into topics with their own proposals and say so.
+4. Hand off: in a flow run, continue to `decompose`. Standalone, this stage is a clear point (complexity.md §3): give the user `/pas:flow <topic>` (or `/pas:decompose <topic>`) as the next message.
+
+Later revisions edit sections in place: no changelogs, no "review fixes" sections, no superseded alternatives.
+
+## 6. Template
 
 ```markdown
-# Proposal (RFC): <Title>
+# Proposal: <title>
 
-## 1. What & Why (Summary of Changes)
-- <Concise description of what is changing, for whom, and why now>
-- **Success criteria**: <Concrete, verifiable outcomes that define done>
-- **Out of scope**: <What this topic explicitly does not change>
+Status: draft | <variant> chosen <date>
 
-## 2. Integration & Migration Strategy
-- **Chosen Strategy**: <Expand-Contract (Parallel) OR In-Place Replacement>
-- **Transition & Old Code Policy**: <How callers switch over; whether old implementation is Deprecated or Removed>
+## 1. What & why
+- <what changes, for whom, why now>
+- **Success criteria**: <verifiable outcomes>
+- **Out of scope**: <what this topic does not change>
 
-## 3. Impact on System Specifications (`docs/specifications/`)
-- <Which specification files will need to be created/updated via `/spec` after implementation, or "None (internal change only)">
+## 2. Conflicts
+- <code / spec / version conflict with `path:line`, or "none found">
 
-## 4. Reuse & Generalization
-- <Per new piece: reuse `path:line` / extract shared `<Name>` from `path:line` + `path:line` (note divergences) / new — nothing similar (searched: <terms>)>
+## 3. Placement
+- <new piece → module or folder, and the dependency rules it keeps>
 
-## 5. Architectural Boundaries, Contracts & Risks
-- <Component boundaries, signatures/interfaces, the dependency rules this change must keep, key risks, and non-goals — no low-level implementation code>
+## 4. Reuse
+- <reuse / extract / new, per piece>
+
+## 5. Variants
+| | Minimal | Clean | Pragmatic |
+| --- | --- | --- | --- |
+| Files touched | | | |
+| New public types or contracts | | | |
+| Strategy | | | |
+| Main risk | | | |
+
+**Recommendation**: <variant, and why>
+
+## 6. Chosen design
+- **Strategy**: Expand-Contract (new code beside the old, callers switch at the end; old code deprecated | removed) | In-Place
+- **Contracts & boundaries**: <signatures, interfaces, dependency rules; no implementation code>
+- **Spec impact**: <files in docs/specifications/ to update via /pas:spec, or "none">
+- **Risks**: <key risks and non-goals>
 ```
-
-### Size Budget (Token Hygiene)
-
-`proposal.md` is re-read by `/decompose`, `/implement`, `/review`, and `/spec`, often several times, so every extra line is paid for repeatedly:
-
-- **Target ≤ 150 lines; hard cap 300 lines** (roughly 15 KB). If the design does not fit, the topic is too big: split it into separate topics (`.temp/<topic-a>/`, `.temp/<topic-b>/`), each with its own proposal, and say so.
-- Record **decisions and contracts**, not the discussion that led to them. Reference existing code and specs by `path:line` or section instead of copying them.
-- When revising after `/review` or user feedback, **edit the affected sections in place**. Do not append changelogs, "Review-N fixes" sections, or superseded alternatives.
-- Before finishing, check the line count (e.g., `wc -l`); if it is over the cap, trim before handing off.
-
----
-
-## 6. Forward Handoff & Terminal Turn Rule (CRITICAL)
-
-After saving `.temp/<topic>/proposal.md`:
-
-1. Link to `.temp/<topic>/proposal.md`, state its line count, and highlight the chosen Integration Strategy (`Expand-Contract` vs `In-Place`) plus any open decision.
-2. This is a **checkpoint gate** (the user approves the architecture). Ask one short question in the user's language, recommended answer first:
-   - *"Затверджуєш? Далі `/decompose` у `tasks.md`."* — alternatives: `/review` of `proposal.md` first, or refine the strategy.
-3. **STOP YOUR TURN IMMEDIATELY.** Wait for the user's response — unless the user requested Autopilot and no decision is open, in which case proceed to `/decompose`.
